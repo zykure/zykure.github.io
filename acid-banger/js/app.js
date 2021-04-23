@@ -180,12 +180,13 @@ function AutoPilot(state) {
                 }
             }
             else if (measure % 16 === 4) {
-                state.notes.forEach((n, i) => {
+                state.notes.every((n, i) => {
                     const age = measure - lastNoteChange[i];
                     if (age >= 20 && Math.random() < 0.5) {
                         console.log("measure #%d: will generate new pattern for unit %d (age %d)", measure, i, age);
                         n.newPattern.value = true;
                         lastNoteChange[i] = measure;
+                        return;
                     }
                 });
             }
