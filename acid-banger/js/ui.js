@@ -12,7 +12,8 @@ const defaultColors = {
     glide: "#CCAA88",
     text: "#CCCCFF",
     highlight: "rgba(255,255,255,0.2)",
-    grid: "rgba(255,255,255,0.2)",
+    grid1: "rgba(255,255,255,0.2)",
+    grid2: "rgba(255,255,255,0.5)",
     dial: "#AA88CC"
 };
 function DialSet(parameters, ...classes) {
@@ -27,6 +28,27 @@ function DialSet(parameters, ...classes) {
         // Move the dial if the parameter changes elsewhere
         param.subscribe(v => dial.value = v);
         container.append(dial.element);
+    });
+    return container;
+}
+function MidiControls(midiDevice, deviceNames, parameters, ...classes) {
+    const params = Array.isArray(parameters) ? parameters : Object.keys(parameters).map(k => parameters[k]);
+    const container = document.createElement("div");
+    container.classList.add("midi-controls", "params", ...classes);
+    const list = optionList(midiDevice, deviceNames);
+    container.append(list);
+    // TODO: add labels
+    params.forEach(param => {
+        const inp = document.createElement("input");
+        inp.classList.add("number-input");
+        inp.type = "number";
+        inp.value = "-1";
+        inp.min = "-1";
+        inp.max = "127";
+        inp.step = "1";
+        param.subscribe(v => inp.value = param.value.toString());
+        inp.addEventListener("change", () => param.value = +inp.value);
+        container.append(inp);
     });
     return container;
 }
@@ -46,21 +68,33 @@ function triggerButton(target) {
     return but;
 }
 function toggleButton(param, ...classes) {
-    const button = document.createElement("button");
-    button.classList.add(...classes);
-    button.innerText = param.name;
-    button.addEventListener("click", () => param.value = !param.value);
+    const but = document.createElement("button");
+    but.classList.add(...classes);
+    but.innerText = param.name;
+    but.addEventListener("click", () => param.value = !param.value);
     param.subscribe(v => {
         if (v) {
-            button.classList.add("on");
-            button.classList.remove("off");
+            but.classList.add("on");
+            but.classList.remove("off");
         }
         else {
-            button.classList.add("off");
-            button.classList.remove("on");
+            but.classList.add("off");
+            but.classList.remove("on");
         }
     });
-    return button;
+    return but;
+}
+function optionList(param, options) {
+    const sel = document.createElement("select");
+    sel.classList.add("option-list");
+    sel.addEventListener("click", () => param.value = sel.selectedIndex);
+    for (let name of options) {
+        var opt = document.createElement("option");
+        opt.text = name;
+        //opt.value = id;
+        sel.add(opt);
+    }
+    return sel;
 }
 function label(text) {
     const element = document.createElement("div");
@@ -104,14 +138,15 @@ function PatternDisplay(patternParam, stepParam, colors = defaultColors) {
         g.font = "10px Orbitron";
         g.fillStyle = colors.bg;
         g.fillRect(0, 0, w, h);
-        g.strokeStyle = colors.grid;
         for (let i = 0; i < pattern.length; i++) {
+            g.strokeStyle = i % 4 == 0 ? colors.grid2 : colors.grid1;
             const x = w * i / pattern.length;
             g.beginPath();
             g.moveTo(x, 0);
             g.lineTo(x, h);
             g.stroke();
         }
+        g.strokeStyle = colors.grid1;
         for (let i = 0; i < 80; i++) {
             const y = h - (i * vScale);
             g.beginPath();
@@ -228,13 +263,13 @@ function AudioMeter(analyser) {
     window.requestAnimationFrame(draw);
     return canvas;
 }
-export function UI(state, autoPilot, analyser) {
+export function UI(state, autoPilot, analyser, midiDevices) {
     const ui = document.createElement("div");
     ui.id = "ui";
     const otherControls = controls(AutopilotControls(autoPilot), NoteGen(state.gen), DelayControls(state.delay), controlGroup(label("Clock"), DialSet([state.clock.bpm], "horizontal")), controlGroup(label("Meter"), group(AudioMeter(analyser)), "meter"));
     const machineContainer = document.createElement("div");
     machineContainer.classList.add("machines");
-    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters))));
+    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters), MidiControls(n.midiDevice, midiDevices, n.midiControls, "horizontal"))));
     const drumMachine = machine(label("909-XX"), group(triggerButton(state.drums.newPattern), DrumDisplay(state.drums.pattern, state.drums.mutes, state.clock.currentStep), Mutes(state.drums.mutes)));
     machineContainer.append(...noteMachines, drumMachine);
     ui.append(machineContainer, otherControls);

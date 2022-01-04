@@ -13,7 +13,7 @@ export function pressToStart(fn, title, description, callToAction = "Click, tap 
     document.head.insertAdjacentHTML("beforeend", `
     <style>
         body {
-            height: 95vh;  margin: 0; padding: 0; 
+            height: 95vh;  margin: 0; padding: 0;
         }
         #${button.id} {
             width: 100%;
@@ -26,7 +26,7 @@ export function pressToStart(fn, title, description, callToAction = "Click, tap 
             color:grey;
             background-color: black;
         }
-        
+
         #${introText.id} {
             max-width: 640px;
             font-size: 1.5em;

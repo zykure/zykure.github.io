@@ -14,6 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { Clock, pressToStart } from "./boilerplate.js";
 import { Audio } from './audio.js';
+import { Midi } from './midi.js';
 import { NineOhGen, ThreeOhGen } from "./pattern.js";
 import { UI } from "./ui.js";
 import { genericParameter, parameter, trigger } from "./interface.js";
@@ -52,10 +53,27 @@ function WanderingParameter(param, scaleFactor = 1 / 400) {
         step
     };
 }
-function ThreeOhUnit(audio, waveform, output, gen, patternLength = 16) {
+function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
     const synth = audio.ThreeOh(waveform, output);
+    const midiDevice = parameter("MIDI Device", [0, Infinity], 0);
     const pattern = genericParameter("Pattern", []);
     const newPattern = trigger("New Pattern Trigger", true);
+    const parameters = {
+        cutoff: parameter("Cutoff", [30, 700], 400),
+        resonance: parameter("Resonance", [1, 30], 15),
+        envMod: parameter("Env Mod", [0, 8000], 4000),
+        decay: parameter("Decay", [0.1, 0.9], 0.5),
+        distortion: parameter("Dist", [0, 80], 0)
+    };
+    const midiControls = {
+        offset: parameter("Pitch Offset", [-48, 48], 0),
+        cutoff: parameter("Cutoff CC", [-1, 127], 0),
+        resonance: parameter("Resonance CC", [-1, 127], 0),
+        envMod: parameter("Env Mod CC", [-1, 127], 0),
+        decay: parameter("Decay CC", [-1, 127], 0),
+        distortion: parameter("Dist CC", [-1, 127], 0)
+    };
+    var midiOutput = midi ? midi.OutputDevice(midiDevice.value) : null;
     gen.newNotes.subscribe(newNotes => {
         if (newNotes == true)
             newPattern.value = true;
@@ -68,27 +86,61 @@ function ThreeOhUnit(audio, waveform, output, gen, patternLength = 16) {
         const slot = pattern.value[index % patternLength];
         if (slot.note != "-") {
             synth.noteOn(slot.note, slot.accent, slot.glide);
+            if (midiOutput)
+                midiOutput.noteOn(slot.note, slot.accent, slot.glide, midiControls.offset.value);
         }
         else {
             synth.noteOff();
+            //if (midiOutput)
+            //    midiOutput.noteOff();
         }
     }
-    const parameters = {
-        cutoff: parameter("Cutoff", [30, 700], 400),
-        resonance: parameter("Resonance", [1, 30], 15),
-        envMod: parameter("Env Mod", [0, 8000], 4000),
-        decay: parameter("Decay", [0.1, 0.9], 0.5),
-        distortion: parameter("Dist", [0, 80], 0)
-    };
     parameters.cutoff.subscribe(v => synth.params.cutoff.value = v);
     parameters.resonance.subscribe(v => synth.params.resonance.value = v);
     parameters.envMod.subscribe(v => synth.params.envMod.value = v);
     parameters.decay.subscribe(v => synth.params.decay.value = v);
     parameters.distortion.subscribe(v => synth.params.distortion.value = v);
+    if (midi) {
+        midiDevice.subscribe(d => {
+            var output = midi.getOutput(d);
+            console.log("MIDI output device: " + output.manufacturer + " " + output.name);
+            midiOutput = midi.OutputDevice(midiDevice.value);
+            midiControls.offset.value = 0;
+            midiControls.cutoff.value = -1;
+            midiControls.resonance.value = -1;
+            midiControls.envMod.value = -1;
+            midiControls.decay.value = -1;
+            midiControls.distortion.value = -1;
+            if (output.manufacturer.startsWith('KORG')) {
+                if (output.name.startsWith('minilogue xd')) {
+                    /// Control Values for Korg Minilogue XD
+                    midiControls.cutoff.value = 43;
+                    midiControls.resonance.value = 44;
+                    midiControls.envMod.value = 22;
+                    midiControls.decay.value = 17;
+                    midiControls.distortion.value = -1;
+                }
+            }
+            /// TODO: add definitions based on MIDI Manufacturer/Name
+        });
+        function sendMidiControl(midi, device, param, control) {
+            var v = Math.trunc((param.value - param.bounds[0]) / (param.bounds[1] - param.bounds[0]) * 127); // convert to MIDI range
+            if (midiOutput && control.value >= 0) {
+                midiOutput.controlChange(control.value, v);
+            }
+        }
+        parameters.cutoff.subscribe(v => sendMidiControl(midi, midiDevice, parameters.cutoff, midiControls.cutoff));
+        parameters.resonance.subscribe(v => sendMidiControl(midi, midiDevice, parameters.resonance, midiControls.resonance));
+        parameters.envMod.subscribe(v => sendMidiControl(midi, midiDevice, parameters.envMod, midiControls.envMod));
+        parameters.decay.subscribe(v => sendMidiControl(midi, midiDevice, parameters.decay, midiControls.decay));
+        parameters.distortion.subscribe(v => sendMidiControl(midi, midiDevice, parameters.distortion, midiControls.distortion));
+    }
     return {
         step,
         pattern,
         parameters,
+        midiDevice,
+        midiControls,
         newPattern
     };
 }
@@ -251,11 +303,29 @@ function start() {
         const clock = ClockUnit();
         const delay = DelayUnit(audio);
         clock.bpm.subscribe(b => delay.delayTime.value = (3 / 4) * (60 / b));
+        var midiDevices = [];
+        // window.navigator.requestMIDIAccess()
+        //     .then((midiAccess) => {
+        //         console.log("MIDI Ready!");
+        //         midi = Midi(midiAccess);
+        //         midi.listInputsAndOutputs();
+        //         midiDevices = midi.getOutputNames();
+        //         clock.bpm.subscribe(b => midi.noteLength = (1/4) * (60000/b));
+        //     })
+        //     .catch((error) => {
+        //         console.log("Error accessing MIDI devices: " + error);
+        //         midi = null;
+        //     });
+        if (midi) {
+            console.log("MIDI output enabled");
+            midiDevices = midi.getOutputNames();
+            clock.bpm.subscribe(b => midi.noteLength = (1 / 4) * (60000 / b));
+        }
         const gen = ThreeOhGen();
         const programState = {
             notes: [
-                ThreeOhUnit(audio, "sawtooth", delay.inputNode, gen),
-                ThreeOhUnit(audio, "square", delay.inputNode, gen)
+                ThreeOhUnit(audio, midi, "sawtooth", delay.inputNode, gen),
+                ThreeOhUnit(audio, midi, "square", delay.inputNode, gen)
             ],
             drums: yield NineOhUnit(audio),
             gen,
@@ -264,9 +334,20 @@ function start() {
         };
         clock.currentStep.subscribe(step => [...programState.notes, programState.drums].forEach(d => d.step(step)));
         const autoPilot = AutoPilot(programState);
-        const ui = UI(programState, autoPilot, audio.master.analyser);
+        const ui = UI(programState, autoPilot, audio.master.analyser, midiDevices);
         document.body.append(ui);
     });
 }
+var midi = null;
+window.navigator.requestMIDIAccess()
+    .then((midiAccess) => {
+    console.log("MIDI Ready!");
+    midi = Midi(midiAccess);
+    midi.listInputsAndOutputs();
+})
+    .catch((error) => {
+    console.log("Error accessing MIDI devices: " + error);
+    midi = null;
+});
 pressToStart(start, "Spicy Endless Acid Banger", "A collaboration between human and algorithm by Vitling, spiced up by Zykure");
 //# sourceMappingURL=app.js.map
