@@ -73,7 +73,6 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
         decay: parameter("Decay CC", [-1, 127], 0),
         distortion: parameter("Dist CC", [-1, 127], 0)
     };
-    var midiOutput = midi ? midi.OutputDevice(midiDevice.value) : null;
     gen.newNotes.subscribe(newNotes => {
         if (newNotes == true)
             newPattern.value = true;
@@ -86,13 +85,13 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
         const slot = pattern.value[index % patternLength];
         if (slot.note != "-") {
             synth.noteOn(slot.note, slot.accent, slot.glide);
-            if (midiOutput)
-                midiOutput.noteOn(slot.note, slot.accent, slot.glide, midiControls.offset.value);
+            if (midi)
+                midi.OutputDevice(midiDevice.value).noteOn(slot.note, slot.accent, slot.glide, midiControls.offset.value);
         }
         else {
             synth.noteOff();
-            //if (midiOutput)
-            //    midiOutput.noteOff();
+            //if (midi)
+            //    midi.OutputDevice(midiDevice.value).noteOff();
         }
     }
     parameters.cutoff.subscribe(v => synth.params.cutoff.value = v);
@@ -102,38 +101,39 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
     parameters.distortion.subscribe(v => synth.params.distortion.value = v);
     if (midi) {
         midiDevice.subscribe(d => {
-            var output = midi.getOutput(d);
-            console.log("MIDI output device: " + output.manufacturer + " " + output.name);
-            midiOutput = midi.OutputDevice(midiDevice.value);
             midiControls.offset.value = 0;
             midiControls.cutoff.value = -1;
             midiControls.resonance.value = -1;
             midiControls.envMod.value = -1;
             midiControls.decay.value = -1;
             midiControls.distortion.value = -1;
-            if (output.manufacturer.startsWith('KORG')) {
-                if (output.name.startsWith('minilogue xd')) {
-                    /// Control Values for Korg Minilogue XD
-                    midiControls.cutoff.value = 43;
-                    midiControls.resonance.value = 44;
-                    midiControls.envMod.value = 22;
-                    midiControls.decay.value = 17;
-                    midiControls.distortion.value = -1;
+            var output = midi.getOutput(d);
+            if (output) {
+                console.log("MIDI output device: " + output.manufacturer + " " + output.name);
+                if (output.manufacturer.startsWith('KORG')) {
+                    if (output.name.startsWith('minilogue xd')) {
+                        /// Control Values for Korg Minilogue XD
+                        midiControls.cutoff.value = 43;
+                        midiControls.resonance.value = 44;
+                        midiControls.envMod.value = 22;
+                        midiControls.decay.value = 17;
+                        midiControls.distortion.value = -1;
+                    }
                 }
+                /// TODO: add definitions based on MIDI Manufacturer/Name
             }
-            /// TODO: add definitions based on MIDI Manufacturer/Name
         });
-        function sendMidiControl(midi, device, param, control) {
+        function sendMidiControl(param, control) {
             var v = Math.trunc((param.value - param.bounds[0]) / (param.bounds[1] - param.bounds[0]) * 127); // convert to MIDI range
-            if (midiOutput && control.value >= 0) {
-                midiOutput.controlChange(control.value, v);
+            if (midi && control.value >= 0) {
+                midi.OutputDevice(midiDevice.value).controlChange(control.value, v);
             }
         }
-        parameters.cutoff.subscribe(v => sendMidiControl(midi, midiDevice, parameters.cutoff, midiControls.cutoff));
-        parameters.resonance.subscribe(v => sendMidiControl(midi, midiDevice, parameters.resonance, midiControls.resonance));
-        parameters.envMod.subscribe(v => sendMidiControl(midi, midiDevice, parameters.envMod, midiControls.envMod));
-        parameters.decay.subscribe(v => sendMidiControl(midi, midiDevice, parameters.decay, midiControls.decay));
-        parameters.distortion.subscribe(v => sendMidiControl(midi, midiDevice, parameters.distortion, midiControls.distortion));
+        parameters.cutoff.subscribe(v => sendMidiControl(parameters.cutoff, midiControls.cutoff));
+        parameters.resonance.subscribe(v => sendMidiControl(parameters.resonance, midiControls.resonance));
+        parameters.envMod.subscribe(v => sendMidiControl(parameters.envMod, midiControls.envMod));
+        parameters.decay.subscribe(v => sendMidiControl(parameters.decay, midiControls.decay));
+        parameters.distortion.subscribe(v => sendMidiControl(parameters.distortion, midiControls.distortion));
     }
     return {
         step,
@@ -144,9 +144,10 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
         newPattern
     };
 }
-function NineOhUnit(audio) {
+function NineOhUnit(audio, midi) {
     return __awaiter(this, void 0, void 0, function* () {
         const drums = yield audio.SamplerDrumMachine(["samples/bd01.mp4", "samples/oh01.mp4", "samples/hh01.mp4", "samples/sd02.mp4", "samples/cp01.mp4"]);
+        const midiDevice = parameter("MIDI Device", [0, Infinity], 0);
         const pattern = genericParameter("Drum Pattern", []);
         const mutes = [
             genericParameter("Mute BD", false),
@@ -154,6 +155,14 @@ function NineOhUnit(audio) {
             genericParameter("Mute CH", false),
             genericParameter("Mute SD", false),
             genericParameter("Mute CP", false)
+        ];
+        const middleC = 60;
+        const midiNotes = [
+            parameter("BD Note#", [0, 80], middleC - 12),
+            parameter("OH Note#", [0, 80], middleC - 2),
+            parameter("CH Note#", [0, 80], middleC - 4),
+            parameter("SD Note#", [0, 80], middleC - 10),
+            parameter("CP Note#", [0, 80], middleC - 9)
         ];
         const newPattern = trigger("New Pattern Trigger", true);
         const gen = NineOhGen();
@@ -166,13 +175,26 @@ function NineOhUnit(audio) {
                 const entry = pattern.value[i][index % pattern.value[i].length];
                 if (entry && !mutes[i].value) {
                     drums.triggers[i].play(entry);
+                    if (midi) {
+                        midi.OutputDevice(midiDevice.value).noteOn(midiNotes[i].value, false, false);
+                    }
                 }
             }
+        }
+        if (midi) {
+            midiDevice.subscribe(d => {
+                var output = midi.getOutput(d);
+                if (output) {
+                    console.log("MIDI output device: " + output.manufacturer + " " + output.name);
+                }
+            });
         }
         return {
             step,
             pattern,
             mutes,
+            midiDevice,
+            midiNotes,
             newPattern
         };
     });
@@ -247,6 +269,7 @@ function AutoPilot(state) {
     currentMeasure.subscribe(measure => {
         if (mutesEnabled.value) {
             const drumMutes = [Math.random() < 0.2, Math.random() < 0.5, Math.random() < 0.5, Math.random() < 0.5, Math.random() < 0.8];
+            const numActive = state.drums.mutes.reduce((sum, current) => !current.value ? sum + 1 : sum, 0);
             if (measure % 8 === 0) {
                 console.log("measure #%d: may mute drum parts", measure);
                 state.drums.mutes.forEach((m, i) => {
@@ -261,10 +284,10 @@ function AutoPilot(state) {
                     }
                 });
             }
-            else if (measure % 4 === 0) {
+            else if (measure % 2 === 0) {
                 console.log("measure #%d: may unmute drum parts", measure);
                 state.drums.mutes.forEach((m, i) => {
-                    if (Math.random() < 0.5) {
+                    if (Math.random() < 0.5 || numActive < 2) {
                         m.value && (m.value = drumMutes[i]);
                     }
                 });
@@ -303,22 +326,8 @@ function start() {
         const clock = ClockUnit();
         const delay = DelayUnit(audio);
         clock.bpm.subscribe(b => delay.delayTime.value = (3 / 4) * (60 / b));
-        var midiDevices = [];
-        // window.navigator.requestMIDIAccess()
-        //     .then((midiAccess) => {
-        //         console.log("MIDI Ready!");
-        //         midi = Midi(midiAccess);
-        //         midi.listInputsAndOutputs();
-        //         midiDevices = midi.getOutputNames();
-        //         clock.bpm.subscribe(b => midi.noteLength = (1/4) * (60000/b));
-        //     })
-        //     .catch((error) => {
-        //         console.log("Error accessing MIDI devices: " + error);
-        //         midi = null;
-        //     });
         if (midi) {
             console.log("MIDI output enabled");
-            midiDevices = midi.getOutputNames();
             clock.bpm.subscribe(b => midi.noteLength = (1 / 4) * (60000 / b));
         }
         const gen = ThreeOhGen();
@@ -327,27 +336,31 @@ function start() {
                 ThreeOhUnit(audio, midi, "sawtooth", delay.inputNode, gen),
                 ThreeOhUnit(audio, midi, "square", delay.inputNode, gen)
             ],
-            drums: yield NineOhUnit(audio),
+            drums: yield NineOhUnit(audio, midi),
             gen,
             delay,
             clock
         };
         clock.currentStep.subscribe(step => [...programState.notes, programState.drums].forEach(d => d.step(step)));
         const autoPilot = AutoPilot(programState);
-        const ui = UI(programState, autoPilot, audio.master.analyser, midiDevices);
+        const ui = UI(programState, autoPilot, audio.master.analyser, midi);
         document.body.append(ui);
     });
 }
 var midi = null;
-window.navigator.requestMIDIAccess()
-    .then((midiAccess) => {
-    console.log("MIDI Ready!");
-    midi = Midi(midiAccess);
-    midi.listInputsAndOutputs();
-})
-    .catch((error) => {
+try {
+    window.navigator.requestMIDIAccess()
+        .then((midiAccess) => {
+        console.log("MIDI Ready!");
+        midi = Midi(midiAccess);
+        midi.listInputsAndOutputs();
+    })
+        .catch((error) => {
+        console.log("Error accessing MIDI devices: " + error);
+    });
+}
+catch (error) {
     console.log("Error accessing MIDI devices: " + error);
-    midi = null;
-});
+}
 pressToStart(start, "Spicy Endless Acid Banger", "A collaboration between human and algorithm by Vitling, spiced up by Zykure");
 //# sourceMappingURL=app.js.map

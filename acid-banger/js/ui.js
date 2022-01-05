@@ -4,7 +4,7 @@
   https://creativecommons.org/licenses/by/4.0/
 */
 import { textNoteToNumber } from "./audio.js";
-import { Dial } from "./dial.js";
+import { Dial, RangeSelect } from "./dial.js";
 const defaultColors = {
     bg: "#222266",
     note: "#88aacc",
@@ -12,8 +12,8 @@ const defaultColors = {
     glide: "#CCAA88",
     text: "#CCCCFF",
     highlight: "rgba(255,255,255,0.2)",
-    grid1: "rgba(255,255,255,0.2)",
-    grid2: "rgba(255,255,255,0.5)",
+    grid1: "rgba(255,255,255,0.1)",
+    grid2: "rgba(255,255,255,0.3)",
     dial: "#AA88CC"
 };
 function DialSet(parameters, ...classes) {
@@ -22,7 +22,7 @@ function DialSet(parameters, ...classes) {
     container.classList.add("params", ...classes);
     params.forEach(param => {
         //const param = parameters[p];
-        const dial = Dial(param.bounds, param.name, defaultColors.dial, defaultColors.text);
+        const dial = Dial(param.value, param.bounds, param.name, defaultColors.dial, defaultColors.text);
         // Change the parameter if we move the dial
         dial.bind(v => { param.value = v; });
         // Move the dial if the parameter changes elsewhere
@@ -35,20 +35,21 @@ function MidiControls(midiDevice, deviceNames, parameters, ...classes) {
     const params = Array.isArray(parameters) ? parameters : Object.keys(parameters).map(k => parameters[k]);
     const container = document.createElement("div");
     container.classList.add("midi-controls", "params", ...classes);
+    const label = document.createElement("span");
+    container.append(document.createTextNode("MIDI Device:"));
     const list = optionList(midiDevice, deviceNames);
     container.append(list);
-    // TODO: add labels
     params.forEach(param => {
-        const inp = document.createElement("input");
-        inp.classList.add("number-input");
-        inp.type = "number";
-        inp.value = "-1";
-        inp.min = "-1";
-        inp.max = "127";
-        inp.step = "1";
-        param.subscribe(v => inp.value = param.value.toString());
-        inp.addEventListener("change", () => param.value = +inp.value);
-        container.append(inp);
+        const label = document.createElement("span");
+        label.classList.add("param-name");
+        label.append(document.createTextNode(param.name + ":"));
+        container.append(label);
+        const dial = RangeSelect(param.value, param.bounds, param.name);
+        // Change the parameter if we move the dial
+        dial.bind(v => { param.value = v; });
+        // Move the dial if the parameter changes elsewhere
+        param.subscribe(v => dial.value = v);
+        container.append(dial.element);
     });
     return container;
 }
@@ -146,8 +147,8 @@ function PatternDisplay(patternParam, stepParam, colors = defaultColors) {
             g.lineTo(x, h);
             g.stroke();
         }
-        g.strokeStyle = colors.grid1;
         for (let i = 0; i < 80; i++) {
+            g.strokeStyle = i % 12 == 0 ? colors.grid2 : colors.grid1;
             const y = h - (i * vScale);
             g.beginPath();
             g.moveTo(0, y);
@@ -187,6 +188,14 @@ function DrumDisplay(pattern, mutes, stepParam, colors = defaultColors) {
         const g = canvas.getContext("2d");
         g.fillStyle = colors.bg;
         g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 16; i += 4) {
+            g.strokeStyle = i % 4 == 0 ? colors.grid2 : colors.grid1;
+            const x = w * i / 16;
+            g.beginPath();
+            g.moveTo(x, 0);
+            g.lineTo(x, h);
+            g.stroke();
+        }
         for (let i = 0; i < 16; i++) {
             const x = w * i / 16;
             for (let p = 0; p < pattern.value.length; p++) {
@@ -263,14 +272,15 @@ function AudioMeter(analyser) {
     window.requestAnimationFrame(draw);
     return canvas;
 }
-export function UI(state, autoPilot, analyser, midiDevices) {
+export function UI(state, autoPilot, analyser, midi) {
     const ui = document.createElement("div");
     ui.id = "ui";
     const otherControls = controls(AutopilotControls(autoPilot), NoteGen(state.gen), DelayControls(state.delay), controlGroup(label("Clock"), DialSet([state.clock.bpm], "horizontal")), controlGroup(label("Meter"), group(AudioMeter(analyser)), "meter"));
     const machineContainer = document.createElement("div");
     machineContainer.classList.add("machines");
-    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters), MidiControls(n.midiDevice, midiDevices, n.midiControls, "horizontal"))));
-    const drumMachine = machine(label("909-XX"), group(triggerButton(state.drums.newPattern), DrumDisplay(state.drums.pattern, state.drums.mutes, state.clock.currentStep), Mutes(state.drums.mutes)));
+    const emptyElement = document.createElement("div");
+    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters), midi ? MidiControls(n.midiDevice, midi.getOutputNames(), n.midiControls, "horizontal") : emptyElement)));
+    const drumMachine = machine(label("909-XX"), group(triggerButton(state.drums.newPattern), DrumDisplay(state.drums.pattern, state.drums.mutes, state.clock.currentStep), Mutes(state.drums.mutes), midi ? MidiControls(state.drums.midiDevice, midi.getOutputNames(), state.drums.midiNotes, "horizontal") : emptyElement));
     machineContainer.append(...noteMachines, drumMachine);
     ui.append(machineContainer, otherControls);
     return ui;
