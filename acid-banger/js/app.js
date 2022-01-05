@@ -18,6 +18,25 @@ import { Midi } from './midi.js';
 import { NineOhGen, ThreeOhGen } from "./pattern.js";
 import { UI } from "./ui.js";
 import { genericParameter, parameter, trigger } from "./interface.js";
+const midiControlPresets = new Map([
+    ["KORG INC. minilogue xd", {
+            // Values taken from the minilogue xd Owner's Manual, Version 1.00, page 61
+            offset: 0,
+            cutoff: 43,
+            resonance: 44,
+            envMod: 22,
+            decay: 17,
+            distortion: -1, // Distortion -> N/A
+        }],
+]);
+// Drum MIDI notes relative to middle c (C4 = 60)
+const midiDrumNotes = [
+    -12,
+    -2,
+    -4,
+    -10,
+    -9, // CP
+];
 function WanderingParameter(param, scaleFactor = 1 / 400) {
     const [min, max] = param.bounds;
     let diff = 0.0;
@@ -53,7 +72,7 @@ function WanderingParameter(param, scaleFactor = 1 / 400) {
         step
     };
 }
-function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
+function ThreeOhUnit(audio, midi, waveform, output, bpm, gen, patternLength = 16) {
     const synth = audio.ThreeOh(waveform, output);
     const midiDevice = parameter("MIDI Device", [0, Infinity], 0);
     const pattern = genericParameter("Pattern", []);
@@ -66,12 +85,12 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
         distortion: parameter("Dist", [0, 80], 0)
     };
     const midiControls = {
-        offset: parameter("Pitch Offset", [-48, 48], 0),
-        cutoff: parameter("Cutoff CC", [-1, 127], 0),
-        resonance: parameter("Resonance CC", [-1, 127], 0),
-        envMod: parameter("Env Mod CC", [-1, 127], 0),
-        decay: parameter("Decay CC", [-1, 127], 0),
-        distortion: parameter("Dist CC", [-1, 127], 0)
+        offset: parameter("Pitch", [-48, 48], 0),
+        cutoff: parameter("Cutoff CC", [-1, 127], -1),
+        resonance: parameter("Resonance CC", [-1, 127], -1),
+        envMod: parameter("Env Mod CC", [-1, 127], -1),
+        decay: parameter("Decay CC", [-1, 127], -1),
+        distortion: parameter("Dist CC", [-1, 127], -1)
     };
     gen.newNotes.subscribe(newNotes => {
         if (newNotes == true)
@@ -81,6 +100,12 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
         if ((index === 0 && newPattern.value == true) || pattern.value.length == 0) {
             pattern.value = gen.createPattern();
             newPattern.value = false;
+        }
+        if (midi) {
+            // send 6 clock pulses per 4 steps (24 per quarter note)
+            console.log("Clock is at " + bpm.value + " bpm");
+            for (let i = 0; i < 6; i++)
+                window.setTimeout(() => { midi.OutputDevice(midiDevice.value).clockPulse(); }, (60000 / bpm.value) * (i / 6));
         }
         const slot = pattern.value[index % patternLength];
         if (slot.note != "-") {
@@ -101,26 +126,32 @@ function ThreeOhUnit(audio, midi, waveform, output, gen, patternLength = 16) {
     parameters.distortion.subscribe(v => synth.params.distortion.value = v);
     if (midi) {
         midiDevice.subscribe(d => {
-            midiControls.offset.value = 0;
-            midiControls.cutoff.value = -1;
-            midiControls.resonance.value = -1;
-            midiControls.envMod.value = -1;
-            midiControls.decay.value = -1;
-            midiControls.distortion.value = -1;
             var output = midi.getOutput(d);
             if (output) {
-                console.log("MIDI output device: " + output.manufacturer + " " + output.name);
-                if (output.manufacturer.startsWith('KORG')) {
-                    if (output.name.startsWith('minilogue xd')) {
-                        /// Control Values for Korg Minilogue XD
-                        midiControls.cutoff.value = 43;
-                        midiControls.resonance.value = 44;
-                        midiControls.envMod.value = 22;
-                        midiControls.decay.value = 17;
-                        midiControls.distortion.value = -1;
+                var deviceName = output.manufacturer + " " + output.name;
+                console.log("MIDI output device: " + deviceName);
+                var hasPreset = false;
+                midiControlPresets.forEach((preset, key) => {
+                    if (deviceName.startsWith(key)) {
+                        console.log("Loading MIDI control preset for: " + key);
+                        midiControls.offset.value = preset.offset;
+                        midiControls.cutoff.value = preset.cutoff;
+                        midiControls.resonance.value = preset.resonance;
+                        midiControls.envMod.value = preset.envMod;
+                        midiControls.decay.value = preset.decay;
+                        midiControls.distortion.value = preset.distortion;
+                        hasPreset = true;
                     }
+                });
+                if (!hasPreset) {
+                    console.log("Setting MIDI controls to default values");
+                    midiControls.offset.value = 0;
+                    midiControls.cutoff.value = -1;
+                    midiControls.resonance.value = -1;
+                    midiControls.envMod.value = -1;
+                    midiControls.decay.value = -1;
+                    midiControls.distortion.value = -1;
                 }
-                /// TODO: add definitions based on MIDI Manufacturer/Name
             }
         });
         function sendMidiControl(param, control) {
@@ -158,11 +189,11 @@ function NineOhUnit(audio, midi) {
         ];
         const middleC = 60;
         const midiNotes = [
-            parameter("BD Note#", [0, 80], middleC - 12),
-            parameter("OH Note#", [0, 80], middleC - 2),
-            parameter("CH Note#", [0, 80], middleC - 4),
-            parameter("SD Note#", [0, 80], middleC - 10),
-            parameter("CP Note#", [0, 80], middleC - 9)
+            parameter("BD Pitch", [-48, 48], midiDrumNotes[0]),
+            parameter("OH Pitch", [-48, 48], midiDrumNotes[1]),
+            parameter("CH Pitch", [-48, 48], midiDrumNotes[2]),
+            parameter("SD Pitch", [-48, 48], midiDrumNotes[3]),
+            parameter("CP Pitch", [-48, 48], midiDrumNotes[4])
         ];
         const newPattern = trigger("New Pattern Trigger", true);
         const gen = NineOhGen();
@@ -176,7 +207,8 @@ function NineOhUnit(audio, midi) {
                 if (entry && !mutes[i].value) {
                     drums.triggers[i].play(entry);
                     if (midi) {
-                        midi.OutputDevice(midiDevice.value).noteOn(midiNotes[i].value, false, false);
+                        var note = midiNotes[i].value + middleC;
+                        midi.OutputDevice(midiDevice.value).noteOn(note, false, false);
                     }
                 }
             }
@@ -287,7 +319,7 @@ function AutoPilot(state) {
             else if (measure % 2 === 0) {
                 console.log("measure #%d: may unmute drum parts", measure);
                 state.drums.mutes.forEach((m, i) => {
-                    if (Math.random() < 0.5 || numActive < 2) {
+                    if (Math.random() < 1. / (numActive + 1)) {
                         m.value && (m.value = drumMutes[i]);
                     }
                 });
@@ -333,8 +365,8 @@ function start() {
         const gen = ThreeOhGen();
         const programState = {
             notes: [
-                ThreeOhUnit(audio, midi, "sawtooth", delay.inputNode, gen),
-                ThreeOhUnit(audio, midi, "square", delay.inputNode, gen)
+                ThreeOhUnit(audio, midi, "sawtooth", delay.inputNode, clock.bpm, gen),
+                ThreeOhUnit(audio, midi, "square", delay.inputNode, clock.bpm, gen)
             ],
             drums: yield NineOhUnit(audio, midi),
             gen,
