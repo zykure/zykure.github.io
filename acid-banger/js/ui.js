@@ -276,7 +276,7 @@ function AudioMeter(analyser) {
 export function UI(state, autoPilot, analyser, midi) {
     const ui = document.createElement("div");
     ui.id = "ui";
-    const otherControls = controls(AutopilotControls(autoPilot), NoteGen(state.gen), DelayControls(state.delay), controlGroup(label("Clock"), DialSet([state.clock.bpm], "horizontal")), controlGroup(label("Meter"), group(AudioMeter(analyser)), "meter"));
+    const otherControls = controls(AutopilotControls(autoPilot), NoteGen(state.gen), DelayControls(state.delay), controlGroup(label("Clock"), DialSet([state.clock.bpm], "horizontal")), controlGroup(label("Volume"), DialSet([state.masterVolume], "horizontal")), controlGroup(label("Meter"), group(AudioMeter(analyser)), "meter"));
     const machineContainer = document.createElement("div");
     machineContainer.classList.add("machines");
     const emptyElement = document.createElement("div");
