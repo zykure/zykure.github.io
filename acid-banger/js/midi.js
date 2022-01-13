@@ -24,7 +24,8 @@ export function Midi(midiAccess, noteLength = 100) {
         devices.push("(None)");
         for (var entry of midiAccess.outputs) {
             var output = entry[1];
-            devices.push(output.manufacturer + " " + output.name);
+            //devices.push(output.manufacturer + " " + output.name);
+            devices.push(output.name);
         }
         return devices;
     }
@@ -39,52 +40,73 @@ export function Midi(midiAccess, noteLength = 100) {
             return midiAccess.outputs.get(portID);
         }
     }
+    function startClock(bpm) {
+        for (var entry of midiAccess.outputs) {
+            var output = entry[1];
+            output.send([0xF8]); // clock signal
+        }
+        window.setTimeout(startClock, (60000 / bpm.value) * (1 / 24));
+    }
     function OutputDevice(portID) {
         function noteOn(note, accent = false, glide = false, offset = 0) {
+            if (note < 0)
+                return;
             var midiNote = typeof (note) === 'number' ? note : textNoteToNumber(note);
             midiNote += offset;
             var midiLength = glide ? noteLength : noteLength / 2;
-            var noteOnMessage = [0x90, midiNote, accent ? 0x7f : 0x5f];
-            var noteOffMessage = [0x80, midiNote, 0x40];
+            const noteOnMessage = [0x90, midiNote, accent ? 0x7f : 0x5f];
+            const noteOffMessage = [0x80, midiNote, 0x40];
             var output = getOutput(portID);
             if (output) {
-                // TODO: fix note length
                 //console.log("Sending MIDI message: ", noteOnMessage, noteOffMessage)
                 output.send(noteOnMessage);
-                //output.send( noteOffMessage, window.performance.now() + midiLength );
+                output.send(noteOffMessage, window.performance.now() + midiLength);
             }
         }
         function noteOff(note, offset = 0) {
+            if (note < 0)
+                return;
             var midiNote = typeof (note) === 'number' ? note : textNoteToNumber(note);
             midiNote += offset;
-            var noteOffMessage = [0x80, midiNote, 0x40];
+            const noteOffMessage = [0x80, midiNote, 0x40];
             var output = getOutput(portID);
             if (output) {
                 //console.log("Sending MIDI message: ", noteOffMessage)
                 output.send(noteOffMessage);
             }
         }
+        function allNotesOff() {
+            const notesOffMessage = [0x07B, 0];
+            var output = getOutput(portID);
+            if (output) {
+                //console.log("Sending MIDI message: ", allNotesOff)
+                output.send(allNotesOff);
+            }
+        }
         function controlChange(control, value) {
-            var controlChangeMessage = [0xB0, control, value];
+            if (control < 0)
+                return;
+            const controlChangeMessage = [0xB0, control, value];
             var output = getOutput(portID);
             if (output) {
                 //console.log("Sending MIDI message: ", controlChangeMessage)
                 output.send(controlChangeMessage);
             }
         }
-        function clockPulse() {
-            var clockMessage = [0xF8];
-            var output = getOutput(portID);
-            if (output) {
-                //console.log("Sending MIDI message: ", clockMessage)
-                output.send([0xF8]);
-            }
-        }
+        // function clockPulse() {
+        //     const clockMessage = [0xF8];
+        //     var output = getOutput(portID);
+        //     if (output) {
+        //         //console.log("Sending MIDI message: ", clockMessage)
+        //         output.send(clockMessage);
+        //     }
+        // }
         return {
             noteOn,
             noteOff,
+            allNotesOff,
             controlChange,
-            clockPulse
+            // clockPulse
         };
     }
     return {
@@ -92,7 +114,8 @@ export function Midi(midiAccess, noteLength = 100) {
         listInputsAndOutputs,
         getOutputNames,
         getOutput,
-        OutputDevice
+        OutputDevice,
+        startClock,
     };
 }
 //# sourceMappingURL=midi.js.map

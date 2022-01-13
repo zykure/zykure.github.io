@@ -5,6 +5,7 @@
 */
 import { textNoteToNumber } from "./audio.js";
 import { Dial, RangeSelect } from "./dial.js";
+import { midiControlPresets, midiDrumPresets } from "./app.js";
 const defaultColors = {
     bg: "#222266",
     note: "#88aacc",
@@ -31,14 +32,14 @@ function DialSet(parameters, ...classes) {
     });
     return container;
 }
-function MidiControls(midiDevice, deviceNames, parameters, ...classes) {
+function MidiControls(midiDevice, deviceNames, midiPreset, presetNames, parameters, ...classes) {
     const params = Array.isArray(parameters) ? parameters : Object.keys(parameters).map(k => parameters[k]);
     const container = document.createElement("div");
     container.classList.add("midi-controls", "params", ...classes);
-    const label = document.createElement("span");
-    container.append(document.createTextNode("MIDI Device:"));
-    const list = optionList(midiDevice, deviceNames);
-    container.append(list);
+    const devices = optionList(midiDevice, deviceNames);
+    container.append(devices);
+    const presets = optionList(midiPreset, presetNames);
+    container.append(presets);
     params.forEach(param => {
         const label = document.createElement("span");
         label.classList.add("param-name");
@@ -279,8 +280,11 @@ export function UI(state, autoPilot, analyser, midi) {
     const machineContainer = document.createElement("div");
     machineContainer.classList.add("machines");
     const emptyElement = document.createElement("div");
-    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters), midi ? MidiControls(n.midiDevice, midi.getOutputNames(), n.midiControls, "horizontal") : emptyElement)));
-    const drumMachine = machine(label("909-XX"), group(triggerButton(state.drums.newPattern), DrumDisplay(state.drums.pattern, state.drums.mutes, state.clock.currentStep), Mutes(state.drums.mutes), midi ? MidiControls(state.drums.midiDevice, midi.getOutputNames(), state.drums.midiNotes, "horizontal") : emptyElement));
+    const deviceNames = midi ? midi.getOutputNames() : [];
+    const notePresetNames = [...midiControlPresets.keys()];
+    const drumPresetNames = [...midiDrumPresets.keys()];
+    const noteMachines = state.notes.map((n, i) => machine(label("303-0" + (i + 1)), group(triggerButton(n.newPattern), PatternDisplay(n.pattern, state.clock.currentStep), DialSet(n.parameters), midi ? MidiControls(n.midiDevice, deviceNames, n.midiPreset, notePresetNames, n.midiControls, "horizontal") : emptyElement)));
+    const drumMachine = machine(label("909-XX"), group(triggerButton(state.drums.newPattern), DrumDisplay(state.drums.pattern, state.drums.mutes, state.clock.currentStep), Mutes(state.drums.mutes), midi ? MidiControls(state.drums.midiDevice, deviceNames, state.drums.midiPreset, drumPresetNames, state.drums.midiControls, "horizontal") : emptyElement));
     machineContainer.append(...noteMachines, drumMachine);
     ui.append(machineContainer, otherControls);
     return ui;
