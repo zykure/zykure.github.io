@@ -36,21 +36,39 @@ function MidiControls(midiDevice, deviceNames, midiPreset, presetNames, paramete
     const params = Array.isArray(parameters) ? parameters : Object.keys(parameters).map(k => parameters[k]);
     const container = document.createElement("div");
     container.classList.add("midi-controls", "params", ...classes);
+    const deviceBbox = document.createElement("div");
+    deviceBbox.classList.add("param-box");
+    container.append(deviceBbox);
+    const deviceLabel = document.createElement("span");
+    deviceLabel.classList.add("param-name");
+    deviceLabel.append(document.createTextNode("MIDI Device:"));
+    deviceBbox.append(deviceLabel);
     const devices = optionList(midiDevice, deviceNames);
-    container.append(devices);
+    deviceBbox.append(devices);
+    const presetBox = document.createElement("div");
+    presetBox.classList.add("param-box");
+    container.append(presetBox);
+    const presetLabel = document.createElement("span");
+    presetLabel.classList.add("param-name");
+    presetLabel.append(document.createTextNode("Control Preset:"));
+    presetBox.append(presetLabel);
     const presets = optionList(midiPreset, presetNames);
-    container.append(presets);
+    presetBox.append(presets);
     params.forEach(param => {
+        const box = document.createElement("div");
+        box.classList.add("param-box");
+        container.append(box);
         const label = document.createElement("span");
         label.classList.add("param-name");
         label.append(document.createTextNode(param.name + ":"));
-        container.append(label);
+        box.append(label);
         const dial = RangeSelect(param.value, param.bounds, param.name);
         // Change the parameter if we move the dial
         dial.bind(v => { param.value = v; });
         // Move the dial if the parameter changes elsewhere
         param.subscribe(v => dial.value = v);
-        container.append(dial.element);
+        //container.append(dial.element);
+        box.append(dial.element);
     });
     return container;
 }
