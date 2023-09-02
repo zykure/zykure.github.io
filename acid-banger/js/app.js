@@ -1,7 +1,7 @@
 /*
-  Copyright 2021 David Whiting
-  This work is licensed under a Creative Commons Attribution 4.0 International License
-  https://creativecommons.org/licenses/by/4.0/
+ Copyright 2021 David Whiting
+ This work is licensed under a Creative Commons Attribution 4.0 International License
+ https://creativecommons.org/licenses/by/4.0/
 */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -20,48 +20,81 @@ import { UI } from "./ui.js";
 import { genericParameter, parameter, trigger } from "./interface.js";
 export const midiControlPresets = new Map([
     ["(Default)", {
-            volume: 63,
-            offset: 0,
-            trigger: -1,
-            cutoff: -1,
-            resonance: -1,
-            envMod: -1,
-            decay: -1,
-            distortion: -1,
+            pitchOffset: 0,
+            //absVolume:    63,
+            //triggerCC:    -1,
+            accentCC: -1,
+            cutoffCC: -1,
+            resonanceCC: -1,
+            envModCC: -1,
+            decayCC: -1,
+            distortionCC: -1,
         }],
-    ["minilogue xd (VCO1)", {
-            // Values taken from the minilogue xd Owner's Manual, Version 1.00, page 61
-            volume: 63,
-            offset: 0,
-            trigger: 39,
-            cutoff: 43,
-            resonance: 44,
-            envMod: 22,
-            decay: 17,
-            distortion: -1,
+    ["Elektron - Digitakt", {
+            pitchOffset: 0,
+            //absVolume:    63,
+            //triggerCC:    -1,
+            accentCC: -1,
+            cutoffCC: 74,
+            resonanceCC: 75,
+            envModCC: 77,
+            decayCC: 80,
+            distortionCC: 81, // Amp overdrive
         }],
-    ["minilogue xd (VCO2)", {
+    ["KORG - minilogue xd)", {
             // Values taken from the minilogue xd Owner's Manual, Version 1.00, page 61
-            volume: 63,
-            offset: 0,
-            trigger: 40,
-            cutoff: 43,
-            resonance: 44,
-            envMod: 22,
-            decay: 17,
-            distortion: -1,
+            pitchOffset: 0,
+            //absVolume:    63,
+            //triggerCC:    39,  // Mixer VCO1
+            accentCC: -1,
+            cutoffCC: 43,
+            resonanceCC: 44,
+            envModCC: 22,
+            decayCC: 17,
+            distortionCC: -1,
+        }],
+    ["Behringer - TD-3-MO", {
+            // Values taken from trial & error, only two CC's are supported
+            pitchOffset: 12,
+            //absVolume:    63,
+            //triggerCC:    -1,
+            accentCC: 120,
+            cutoffCC: 74,
+            resonanceCC: -1,
+            envModCC: -1,
+            decayCC: -1,
+            distortionCC: -1,
         }],
 ]);
 // Drum MIDI notes relative to middle c (C4 = 60)
 export const midiDrumPresets = new Map([
     ["(Default)", {
-            volume: 63,
-            trigger: -1,
-            pitchBD: -12,
-            pitchOH: -2,
-            pitchCH: -4,
-            pitchSD: -10,
-            pitchCP: -9,
+            //absVolume:  63,
+            //triggerCC:  -1,
+            pitchBD: 0,
+            pitchOH: 0,
+            pitchCH: 0,
+            pitchSD: 0,
+            pitchCP: 0,
+            channelBD: -1,
+            channelOH: -1,
+            channelCH: -1,
+            channelSD: -1,
+            channelCP: -1,
+        }],
+    ["Elektron - Digitakt", {
+            //absVolume:  63,
+            //triggerCC:  -1,
+            pitchBD: 0,
+            pitchOH: 0,
+            pitchCH: 0,
+            pitchSD: 0,
+            pitchCP: 0,
+            channelBD: 0,
+            channelOH: 6,
+            channelCH: 5,
+            channelSD: 1,
+            channelCP: 3, // Track 4 (Clap)
         }],
 ]);
 function WanderingParameter(param, scaleFactor = 1 / 400) {
@@ -102,9 +135,12 @@ function WanderingParameter(param, scaleFactor = 1 / 400) {
 function ThreeOhUnit(audio, midi, waveform, output, bpm, gen, patternLength = 16) {
     const synth = audio.ThreeOh(waveform, output);
     const midiDevice = parameter("Device", [0, Infinity], 0);
+    const midiChannel = parameter("MIDI Channel", [0, 15], 0);
     const midiPreset = parameter("Preset", [0, Infinity], 0);
     const pattern = genericParameter("Pattern", []);
+    const savedPattern = genericParameter("Pattern", []);
     const newPattern = trigger("New Pattern Trigger", true);
+    const restorePattern = trigger("Restore Pattern Trigger", false);
     const parameters = {
         cutoff: parameter("Cutoff", [30, 700], 400),
         resonance: parameter("Resonance", [1, 30], 15),
@@ -113,14 +149,15 @@ function ThreeOhUnit(audio, midi, waveform, output, bpm, gen, patternLength = 16
         distortion: parameter("Dist", [0, 80], 0)
     };
     const midiControls = {
-        volume: parameter("Volume", [0, 127], 63),
-        offset: parameter("Pitch", [-48, 48], 0),
-        trigger: parameter("Trig CC", [-1, 127], -1),
-        cutoff: parameter("Cutoff CC", [-1, 127], -1),
-        resonance: parameter("Reso CC", [-1, 127], -1),
-        envMod: parameter("EnvMod CC", [-1, 127], -1),
-        decay: parameter("Decay CC", [-1, 127], -1),
-        distortion: parameter("Dist CC", [-1, 127], -1)
+        //absVolume: parameter("Volume", [0,127], 63),
+        //triggerCC: parameter("Trig CC", [-1,127], -1),
+        accentCC: parameter("Acc CC", [-1, 127], -1),
+        cutoffCC: parameter("Cutoff CC", [-1, 127], -1),
+        resonanceCC: parameter("Reso CC", [-1, 127], -1),
+        envModCC: parameter("EnvMod CC", [-1, 127], -1),
+        decayCC: parameter("Decay CC", [-1, 127], -1),
+        distortionCC: parameter("Dist CC", [-1, 127], -1),
+        pitchOffset: parameter("Pitch", [-48, 48], 0),
     };
     gen.newNotes.subscribe(newNotes => {
         if (newNotes == true)
@@ -128,27 +165,47 @@ function ThreeOhUnit(audio, midi, waveform, output, bpm, gen, patternLength = 16
     });
     function step(index) {
         if ((index === 0 && newPattern.value == true) || pattern.value.length == 0) {
+            savedPattern.value = pattern.value;
             pattern.value = gen.createPattern();
             newPattern.value = false;
         }
+        if (index === 0 && restorePattern.value == true && savedPattern.value.length > 0) {
+            const tempPattern = pattern.value;
+            pattern.value = savedPattern.value;
+            savedPattern.value = tempPattern;
+            restorePattern.value = false;
+            newPattern.value = false;
+        }
+        else if (restorePattern.value == true && savedPattern.value.length == 0) {
+            restorePattern.value = false;
+        }
         // if (midi) {
         //     // send 6 clock pulses per 4 steps (24 per quarter note)
+        //     const device = midi.OutputDevice(midiDevice.value, midiChannel.value);
         //     for (let i = 0; i < 6; i++)
-        //         window.setTimeout(() => { midi.OutputDevice(midiDevice.value).clockPulse(); }, (60000/bpm.value)*(i/24));
+        //         window.setTimeout(() => { device.clockPulse(); }, (60000/bpm.value)*(i/24));
         // }
         const slot = pattern.value[index % patternLength];
         if (slot.note != "-") {
             synth.noteOn(slot.note, slot.accent, slot.glide);
             if (midi) {
-                midi.OutputDevice(midiDevice.value).controlChange(midiControls.trigger.value, midiControls.volume.value);
-                midi.OutputDevice(midiDevice.value).noteOn(slot.note, slot.accent, slot.glide, midiControls.offset.value);
+                const device = midi.OutputDevice(midiDevice.value, midiChannel.value);
+                //device.controlChange(midiControls.triggerCC.value, midiControls.absVolume.value);
+                const velocity = slot.accent ? 127 : 100;
+                const length = slot.glide ? 100 : 50;
+                if (slot.accent) {
+                    device.controlChange(midiControls.accentCC.value, slot.accent ? 127 : 0);
+                    setTimeout(() => { device.controlChange(midiControls.accentCC.value, 0); }, 100); // reset after 100 ms, mainly for TD-3-MO (accent = CC change)
+                }
+                device.noteOn(slot.note, velocity, length, midiControls.pitchOffset.value);
             }
         }
         else {
             synth.noteOff();
             if (midi) {
-                //midi.OutputDevice(midiDevice.value).noteOff();
-                midi.OutputDevice(midiDevice.value).controlChange(midiControls.trigger.value, 0x00);
+                const device = midi.OutputDevice(midiDevice.value, midiChannel.value);
+                //device.noteOff();
+                //device.controlChange(midiControls.triggerCC.value, 0x00);
             }
         }
     }
@@ -161,76 +218,65 @@ function ThreeOhUnit(audio, midi, waveform, output, bpm, gen, patternLength = 16
         midiDevice.subscribe(d => {
             var output = midi.getOutput(d);
             if (output) {
-                var deviceName = output.manufacturer + " " + output.name;
+                const deviceName = output.manufacturer + " " + output.name;
                 console.log("MIDI output device: " + deviceName);
-                midi.OutputDevice(midiDevice.value).allNotesOff();
-                // var hasPreset = false;
-                // midiControlPresets.forEach((preset, key) => {
-                //     if (deviceName.startsWith(key)) {
-                //         console.log("Loading MIDI control preset for: " + key);
-                //         midiControls.offset.value = preset.offset;
-                //         midiControls.cutoff.value = preset.cutoff;
-                //         midiControls.resonance.value = preset.resonance;
-                //         midiControls.envMod.value = preset.envMod;
-                //         midiControls.decay.value = preset.decay;
-                //         midiControls.distortion.value = preset.distortion;
-                //         hasPreset = true;
-                //     }
-                // })
-                //
-                // if (! hasPreset) {
-                //     console.log("Setting MIDI controls to default values");
-                //     midiControls.offset.value = 0;
-                //     midiControls.cutoff.value = -1;
-                //     midiControls.resonance.value = -1;
-                //     midiControls.envMod.value = -1;
-                //     midiControls.decay.value = -1;
-                //     midiControls.distortion.value = -1;
-                // }
+                for (let channel = 0; channel < 16; channel++) {
+                    const device = midi.OutputDevice(midiDevice.value, channel);
+                    device.allNotesOff();
+                }
             }
         });
+        midiChannel.subscribe(c => {
+        });
         midiPreset.subscribe(d => {
-            var presetName = Array.from(midiControlPresets.keys())[midiPreset.value];
+            const presetName = Array.from(midiControlPresets.keys())[midiPreset.value];
             console.log("MIDI control preset: " + presetName);
-            var preset = midiControlPresets.get(presetName);
+            const preset = midiControlPresets.get(presetName);
             if (preset) {
-                midiControls.volume.value = preset.volume;
-                midiControls.trigger.value = preset.trigger;
-                midiControls.cutoff.value = preset.cutoff;
-                midiControls.resonance.value = preset.resonance;
-                midiControls.decay.value = preset.decay;
-                midiControls.envMod.value = preset.envMod;
-                midiControls.distortion.value = preset.distortion;
+                //midiControls.absVolume.value = preset.absVolume;
+                //midiControls.triggerCC.value = preset.triggerCC;
+                midiControls.accentCC.value = preset.accentCC;
+                midiControls.cutoffCC.value = preset.cutoffCC;
+                midiControls.resonanceCC.value = preset.resonanceCC;
+                midiControls.decayCC.value = preset.decayCC;
+                midiControls.envModCC.value = preset.envModCC;
+                midiControls.distortionCC.value = preset.distortionCC;
+                midiControls.pitchOffset.value = preset.pitchOffset;
             }
         });
         function sendMidiControl(param, control) {
-            var v = Math.trunc((param.value - param.bounds[0]) / (param.bounds[1] - param.bounds[0]) * 127); // convert to MIDI range
+            const v = Math.trunc((param.value - param.bounds[0]) / (param.bounds[1] - param.bounds[0]) * 127); // convert to MIDI range
             if (midi && control.value >= 0) {
-                midi.OutputDevice(midiDevice.value).controlChange(control.value, v);
+                const device = midi.OutputDevice(midiDevice.value, midiChannel.value);
+                device.controlChange(control.value, v);
             }
         }
-        parameters.cutoff.subscribe(v => sendMidiControl(parameters.cutoff, midiControls.cutoff));
-        parameters.resonance.subscribe(v => sendMidiControl(parameters.resonance, midiControls.resonance));
-        parameters.envMod.subscribe(v => sendMidiControl(parameters.envMod, midiControls.envMod));
-        parameters.decay.subscribe(v => sendMidiControl(parameters.decay, midiControls.decay));
-        parameters.distortion.subscribe(v => sendMidiControl(parameters.distortion, midiControls.distortion));
+        parameters.cutoff.subscribe(v => sendMidiControl(parameters.cutoff, midiControls.cutoffCC));
+        parameters.resonance.subscribe(v => sendMidiControl(parameters.resonance, midiControls.resonanceCC));
+        parameters.envMod.subscribe(v => sendMidiControl(parameters.envMod, midiControls.envModCC));
+        parameters.decay.subscribe(v => sendMidiControl(parameters.decay, midiControls.decayCC));
+        parameters.distortion.subscribe(v => sendMidiControl(parameters.distortion, midiControls.distortionCC));
     }
     return {
         step,
         pattern,
         parameters,
         midiDevice,
+        midiChannel,
         midiPreset,
         midiControls,
-        newPattern
+        newPattern,
+        restorePattern
     };
 }
 function NineOhUnit(audio, midi, bpm) {
     return __awaiter(this, void 0, void 0, function* () {
         const drums = yield audio.SamplerDrumMachine(["samples/bd01.mp4", "samples/oh01.mp4", "samples/hh01.mp4", "samples/sd02.mp4", "samples/cp01.mp4"]);
         const midiDevice = parameter("MIDI Device", [0, Infinity], 0);
+        const midiChannel = parameter("MIDI Channel", [0, 15], 0);
         const midiPreset = parameter("Preset", [0, Infinity], 0);
         const pattern = genericParameter("Drum Pattern", []);
+        const savedPattern = genericParameter("Drum Pattern", []);
         const mutes = [
             genericParameter("Mute BD", false),
             genericParameter("Mute OH", false),
@@ -240,32 +286,57 @@ function NineOhUnit(audio, midi, bpm) {
         ];
         const middleC = 60;
         const midiNotes = [
-            parameter("BD Pitch", [-48, 48], 0),
-            parameter("OH Pitch", [-48, 48], 0),
-            parameter("CH Pitch", [-48, 48], 0),
-            parameter("SD Pitch", [-48, 48], 0),
-            parameter("CP Pitch", [-48, 48], 0)
+            parameter("BD Pitch", [0, 48], 0),
+            parameter("OH Pitch", [0, 48], 0),
+            parameter("CH Pitch", [0, 48], 0),
+            parameter("SD Pitch", [0, 48], 0),
+            parameter("CP Pitch", [0, 48], 0),
+        ];
+        const midiChannels = [
+            parameter("BD Channel", [-1, 15], 0),
+            parameter("OH Channel", [-1, 15], 0),
+            parameter("CH Channel", [-1, 15], 0),
+            parameter("SD Channel", [-1, 15], 0),
+            parameter("CP Channel", [-1, 15], 0),
         ];
         const midiControls = {
-            volume: parameter("Volume", [0, 127], 63),
-            trigger: parameter("Trigger CC", [-1, 127], -1),
+            //absVolume: parameter("Volume", [0,127], 63),
+            //triggerCC: parameter("Trigger CC", [-1,127], -1),
             pitchBD: midiNotes[0],
+            channelBD: midiChannels[0],
             pitchOH: midiNotes[1],
+            channelOH: midiChannels[1],
             pitchCH: midiNotes[2],
+            channelCH: midiChannels[2],
             pitchSD: midiNotes[3],
+            channelSD: midiChannels[3],
             pitchCP: midiNotes[4],
+            channelCP: midiChannels[4],
         };
         const newPattern = trigger("New Pattern Trigger", true);
+        const restorePattern = trigger("Restore Pattern Trigger", false);
         const gen = NineOhGen();
         function step(index) {
             if ((index == 0 && newPattern.value == true) || pattern.value.length == 0) {
+                savedPattern.value = pattern.value;
                 pattern.value = gen.createPatterns(true);
                 newPattern.value = false;
             }
+            if (index === 0 && restorePattern.value == true && savedPattern.value.length > 0) {
+                const tempPattern = pattern.value;
+                pattern.value = savedPattern.value;
+                savedPattern.value = tempPattern;
+                restorePattern.value = false;
+                newPattern.value = false;
+            }
+            else if (restorePattern.value == true && savedPattern.value.length == 0) {
+                restorePattern.value = false;
+            }
             // if (midi) {
             //     // send 6 clock pulses per step (24 per quarter note)
+            //     const device = midi.OutputDevice(midiDevice.value, midiChannel.value);
             //     for (let i = 0; i < 6; i++)
-            //         window.setTimeout(() => { midi.OutputDevice(midiDevice.value).clockPulse(); }, (60000/bpm.value)*(i/24));
+            //         window.setTimeout(() => { device.clockPulse(); }, (60000/bpm.value)*(i/24));
             // }
             var hasNotes = false;
             for (let i in pattern.value) {
@@ -274,37 +345,52 @@ function NineOhUnit(audio, midi, bpm) {
                     drums.triggers[i].play(entry);
                     hasNotes = true;
                     if (midi) {
-                        var note = +middleC;
-                        midi.OutputDevice(midiDevice.value).controlChange(midiControls.trigger.value, midiControls.volume.value);
-                        midi.OutputDevice(midiDevice.value).noteOn(midiNotes[i].value, false, false);
+                        const channel = midiChannels[i].value >= 0 ? midiChannels[i].value : midiChannel.value;
+                        const device = midi.OutputDevice(midiDevice.value, channel);
+                        const velocity = Math.floor(entry * 127);
+                        //device.controlChange(midiControls.triggerCC.value, midiControls.absVolume.value);
+                        device.noteOn(midiNotes[i].value, velocity);
                     }
                 }
             }
             if (midi) {
-                if (!hasNotes)
-                    midi.OutputDevice(midiDevice.value).controlChange(midiControls.trigger.value, 0x00);
+                const channel = /* midiChannels[i].value >= 0 ? midiChannels[i].value : */ midiChannel.value;
+                const device = midi.OutputDevice(midiDevice.value, channel);
+                //if (! hasNotes)
+                //    device.controlChange(midiControls.triggerCC.value, 0x00);
             }
         }
         if (midi) {
             midiDevice.subscribe(d => {
-                var output = midi.getOutput(d);
+                const output = midi.getOutput(d);
                 if (output) {
-                    console.log("MIDI output device: " + output.manufacturer + " " + output.name);
-                    midi.OutputDevice(midiDevice.value).allNotesOff();
+                    const deviceName = output.manufacturer + " " + output.name;
+                    console.log("MIDI output device: " + deviceName);
+                    for (let channel = 0; channel < 16; channel++) {
+                        const device = midi.OutputDevice(midiDevice.value, channel);
+                        device.allNotesOff();
+                    }
                 }
             });
+            midiChannel.subscribe(c => {
+            });
             midiPreset.subscribe(d => {
-                var presetName = Array.from(midiDrumPresets.keys())[midiPreset.value];
+                const presetName = Array.from(midiDrumPresets.keys())[midiPreset.value];
                 console.log("MIDI control preset: " + presetName);
-                var preset = midiDrumPresets.get(presetName);
+                const preset = midiDrumPresets.get(presetName);
                 if (preset) {
-                    midiControls.volume.value = preset.volume;
-                    midiControls.trigger.value = preset.trigger;
+                    //midiControls.absVolume.value = preset.absVolume;
+                    //midiControls.triggerCC.value = preset.triggerCC;
                     midiControls.pitchBD.value = preset.pitchBD;
                     midiControls.pitchOH.value = preset.pitchOH;
                     midiControls.pitchCH.value = preset.pitchCH;
                     midiControls.pitchSD.value = preset.pitchSD;
                     midiControls.pitchCP.value = preset.pitchCP;
+                    midiControls.channelBD.value = preset.channelBD;
+                    midiControls.channelOH.value = preset.channelOH;
+                    midiControls.channelCH.value = preset.channelCH;
+                    midiControls.channelSD.value = preset.channelSD;
+                    midiControls.channelCP.value = preset.channelCP;
                 }
             });
         }
@@ -313,9 +399,11 @@ function NineOhUnit(audio, midi, bpm) {
             pattern,
             mutes,
             midiDevice,
+            midiChannel,
             midiPreset,
             midiControls,
-            newPattern
+            newPattern,
+            restorePattern
         };
     });
 }
