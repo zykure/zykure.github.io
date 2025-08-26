@@ -1,0 +1,118 @@
+body {
+	background-color: #333;
+	color: #FFF;
+	text-align: center;
+	max-width: 1000px;
+	text-align: center;
+	margin: 50px auto;
+	font-family: Verdana,Arial,Helvetica,sans-serif;
+	font-size: 17pt;
+}
+
+@media screen and (max-width:769px) {
+	body {
+		font-size: 17pt;
+		font-size: 3vw;
+	}
+}
+
+@keyframes result-anim {
+	from {
+		transform: rotate(-1.8deg);
+	}
+	to {
+		transform: rotate(1.8deg);
+	}
+}
+
+.result {
+	font-size: 120%;
+	margin-top: 50px;
+	animation: result-anim 1s ease-in-out 0s infinite alternate;
+}
+
+.symbol {
+	font-size: 150%;
+}
+
+.autocomplete {
+	position: relative;
+	display: inline-block;
+}
+
+.autocomplete-items {
+	position: absolute;
+	margin-top: -10px;
+	z-index: 99;
+	top: 100%;
+	left: 0;
+	right: 0;
+}
+.autocomplete-items div {
+	margin: 0px 16px;
+	cursor: pointer;
+	background-color: #666;
+	border: 2px solid #6ba1f3;
+	border-top: none;
+}
+.autocomplete-items div:hover {
+	background-color: #999;
+}
+.autocomplete-active {
+	background-color: #6ba1f3 !important;
+	color: #fff;
+}
+
+#result-correct,
+#result-incorrect,
+#result-gameover {
+	display: none;
+}
+
+#lyrics-line {
+	font-size: 120%;
+	font-style: italic;
+	font-weight: bold;
+	background-color: #2f864d;
+	border: 2px solid #50d22d;
+	border-radius: 12px;
+	padding: 20px;
+	margin: 20px 100px;
+}
+
+#next-guess {
+	font-size: 120%;
+}
+
+#guessed-name {
+	font-size: 110%;
+	margin: 10px;
+	padding: 6px;
+	color: #FFF;
+	background-color: #666;
+	border: 2px solid #6ba1f3;
+	border-radius: 6px;
+	text-align: center;
+}
+
+#submit,
+#reset {
+	font-size: 80%;
+	padding: 6px 12px;
+	margin: 10px 20px;
+}
+
+#submit {
+	background-color: #3ecf97;
+	border: 1px solid #3ecf97;
+	border-radius: 6px;
+}
+#submit:disabled {
+	background-color: #94908b;
+}
+
+#reset {
+	background-color: #dc3d7d;
+	border: 1px solid #dc3d7d;
+	border-radius: 6px;
+}
