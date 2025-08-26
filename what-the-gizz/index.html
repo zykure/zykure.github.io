@@ -82,12 +82,14 @@
 				uniq_lyrics.splice(line_index, 1);  // remove line
 
 				$('#lyrics-line').html("» " + lyrics_line + " «");
-				$('#guessed-name').val("");
+				//$('#guessed-name').val("");
 			}
 			
 			function resetGame() {
 				chooseNewSong();
 				updatePrompt();
+				
+				$('#guessed-name').val("");
 
 				$('#result-correct').hide();
 				$('#result-incorrect').hide();
@@ -133,6 +135,7 @@
 					$('#symbol-gameover-1').html(symbol);
 					$('#symbol-gameover-2').html(symbol);
 					$('#guessed-count-gameover').html(guessed_text);				
+					$('#correct-answer').html(current_song.name);
 					$('#result-correct').hide();
 					$('#result-incorrect').hide();
 					$('#result-gameover').show();
@@ -173,12 +176,13 @@
 				text-align: center;
 				margin: 50px auto;
 				font-family: Verdana,Arial,Helvetica,sans-serif;
-				font-size: 14pt;
+				font-size: 17pt;
 			}
 			
 			@media screen and (max-width:769px) {
 				body {
-					font-size: 22pt;
+					font-size: 17pt;
+					font-size: 3vw;
 				}
 			}
 			
@@ -280,22 +284,27 @@
 		<p id="result-incorrect" class="result">
 			<span id="symbol-incorrect-1" class="symbol"></span>
 			<b>Incorrect!</b>
-			You've used <span id="guessed-count-incorrect">0 guesses</span> so far. Try again?
 			<span id="symbol-incorrect-2" class="symbol"></span>
+			<br/>
+			You've used <span id="guessed-count-incorrect">0 guesses</span> so far. Try again?
 		</p>
 
 		<p id="result-correct" class="result">
 			<span id="symbol-correct-1" class="symbol"></span>
 			<b>Correct!</b>
-			You've used <span id="guessed-count-correct">0 guesses</span> to get there.
 			<span id="symbol-correct-2" class="symbol"></span>
+			<br/>
+			You've used <span id="guessed-count-correct">0 guesses</span> to get there.
 		</p>
 
 		<p id="result-gameover" class="result">
 			<span id="symbol-gameover-1" class="symbol"></span>
 			<b>GAME OVER!</b> 
-			You've used <span id="guessed-count-gameover">0 guesses</span> and there are no more lyrics left.
 			<span id="symbol-gameover-2" class="symbol"></span>
+			<br/>
+			You've used <span id="guessed-count-gameover">0 guesses</span> and there are no more lyrics left.
+			<br/>
+			The correct answer was: <span id="correct-answer"></span>
 		</p>
 	</body>
 </html>
