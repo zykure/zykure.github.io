@@ -1,6 +1,8 @@
+<!DOCTYPE html>
 <html>
 	<head>
 		<title>What the Gizz?!</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script
 			  src="https://code.jquery.com/jquery-2.2.4.min.js"
 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
@@ -16,6 +18,7 @@
 			
 			// Load songs from JSON
 			var songs = [];
+			var song_names = [];
 			loadSongData();
 
 			// Setup internal variables
@@ -33,9 +36,12 @@
 				all_lyrics.albums.forEach((album) => {
 					album.songs.forEach((song) => {
 						songs.push(song);
+						song_names.push(song.name);
 					});
 				});
-				console.log("Loaded songs: ", songs);
+				
+				song_names.sort();
+				console.log("Loaded songs: ", song_names);
 			}
 			
 			function chooseNewSong() {
@@ -81,7 +87,7 @@
 				lyrics_line = uniq_lyrics[line_index];
 				uniq_lyrics.splice(line_index, 1);  // remove line
 
-				$('#lyrics-line').html("» " + lyrics_line + " «");
+				$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
 				//$('#guessed-name').val("");
 			}
 			
@@ -167,6 +173,91 @@
 				resetGame();
 			});
 		</script>
+		<script language="javascript">
+			function autocomplete(inp, arr) {
+				var currentFocus;
+				
+				console.log(arr);
+
+				inp.addEventListener("input", function(e) {
+					var a, b, i, val = this.value;
+					closeAllLists();
+					if (!val) { return false;}
+					currentFocus = -1;
+
+					a = document.createElement("DIV");
+					a.setAttribute("id", this.id + "autocomplete-list");
+					a.setAttribute("class", "autocomplete-items");
+					this.parentNode.appendChild(a);
+
+					for (i = 0; i < arr.length; i++) {
+						if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+							b = document.createElement("DIV");
+							b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+							b.innerHTML += arr[i].substr(val.length);
+							b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+
+							b.addEventListener("click", function(e) {
+								inp.value = this.getElementsByTagName("input")[0].value;
+								closeAllLists();
+							});
+							a.appendChild(b);
+						}
+					}
+				});
+
+				inp.addEventListener("keydown", function(e) {
+					var x = document.getElementById(this.id + "autocomplete-list");
+					if (x) x = x.getElementsByTagName("div");
+					if (e.keyCode == 40) { // down
+						currentFocus++;
+						addActive(x);
+					} else if (e.keyCode == 38) { // up
+						currentFocus--;
+						addActive(x);
+					} else if (e.keyCode == 13) { // enter
+						e.preventDefault();
+						if (currentFocus > -1) {
+							if (x) x[currentFocus].click();
+						}
+					}
+				});
+				
+				function addActive(x) {
+					if (!x) return false;
+					
+					removeActive(x);
+					if (currentFocus >= x.length) currentFocus = 0;
+					if (currentFocus < 0) currentFocus = (x.length - 1);
+					x[currentFocus].classList.add("autocomplete-active");
+				}
+				
+				function removeActive(x) {
+					for (var i = 0; i < x.length; i++) {
+						x[i].classList.remove("autocomplete-active");
+					}
+				}
+				
+				function closeAllLists(elmnt) {
+					var x = document.getElementsByClassName("autocomplete-items");
+					for (var i = 0; i < x.length; i++) {
+						if (elmnt != x[i] && elmnt != inp) {
+							x[i].parentNode.removeChild(x[i]);
+						}
+					}
+				}
+
+				document.addEventListener("click", function (e) {
+					closeAllLists(e.target);
+				});
+				
+				inp.addEventListener('focus', () => inp.select());
+			} 
+		
+			$(document).ready(function() {
+				autocomplete(document.getElementById("guessed-name"), song_names);
+			});
+		</script>
 		<style>
 			body {
 				background-color: #333;
@@ -205,6 +296,34 @@
 				font-size: 150%;
 			}
 			
+			.autocomplete {
+				position: relative;
+				display: inline-block;
+			}
+			
+			.autocomplete-items {
+				position: absolute;
+				margin-top: -10px;
+				z-index: 99;
+				top: 100%;
+				left: 0;
+				right: 0;
+			}
+			.autocomplete-items div {
+				margin: 0px 16px;
+				cursor: pointer;
+				background-color: #666;
+				border: 2px solid #6ba1f3;
+				border-top: none;
+			}
+			.autocomplete-items div:hover {
+				background-color: #999;
+			}
+			.autocomplete-active {
+				background-color: #6ba1f3 !important;
+				color: #fff;
+			}
+
 			#result-correct,
 			#result-incorrect,
 			#result-gameover {
@@ -275,7 +394,9 @@
 
 		<form id="next-guess" name="next-guess">
 			<label for="guessed-name">Song Name:</label><br/>
-			<input type="text" id="guessed-name" name="guessed-name" size="30"/>
+			<div class="autocomplete">
+				<input type="text" id="guessed-name" name="guessed-name" size="30"/>
+			</div>
 		</form>
 
 		<button type="button" id="submit" value="submit" onClick="submitGuess()">Submit!</button>
