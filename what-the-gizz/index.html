@@ -76,12 +76,12 @@
 			// Update the user prompt
 			function updatePrompt() {
 				var line_index = randomIndex(uniq_lyrics);		
-				uniq_lyrics.splice(line_index, 1);  // remove line
 				console.log("Choosing line no.: ", line_index);
 				
 				lyrics_line = uniq_lyrics[line_index];
+				uniq_lyrics.splice(line_index, 1);  // remove line
+
 				$('#lyrics-line').html("» " + lyrics_line + " «");
-				
 				$('#guessed-name').val("");
 			}
 			
@@ -173,6 +173,13 @@
 				text-align: center;
 				margin: 50px auto;
 				font-family: Verdana,Arial,Helvetica,sans-serif;
+				font-size: 14pt;
+			}
+			
+			@media screen and (max-width:769px) {
+				body {
+					font-size: 22pt;
+				}
 			}
 			
 			@keyframes result-anim {
