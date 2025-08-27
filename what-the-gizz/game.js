@@ -1,7 +1,7 @@
 console.log(all_lyrics);
 
 // Some emojis for result display
-const symbols_correct   = ['🥳', '🤩', '☺', '😃', '😄', '😆'];
+const symbols_correct   = ['🥳', '🤩', '😎', '😄', '😆'];
 const symbols_incorrect = ['🫢', '🫣', '🤔', '🤨', '😧', '😱'];
 const symbols_gameover  = ['😵', '😵‍💫', '😖', '😭', '🤬'];
 
@@ -81,7 +81,8 @@ function updatePrompt() {
 
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
 	//$('#guess').val("");
-	$('#lyrics-line').focus();
+	
+	$('#guess').focus();
 }
 
 function resetGame() {
@@ -91,9 +92,7 @@ function resetGame() {
 	
 	$('#guess').val("");
 
-	$('#result-correct').hide();
-	$('#result-incorrect').hide();
-	$('#result-gameover').hide();
+	$('#result').hide();
 	
 	$('#submit').prop('disabled', false);
 	$('#giveup').prop('disabled', false);
@@ -184,9 +183,15 @@ function showTryAgain() {
 }
 
 function updateGuesses() {
-	$('#tries').html(`
-		Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
-	`);
+	if (previous_guesses.length > 0) {
+		$('#tries').html(`
+			Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
+		`);
+		$('#tries').show();
+	}
+	else {
+		$('#tries').hide();
+	}
 }
 
 // Process user input

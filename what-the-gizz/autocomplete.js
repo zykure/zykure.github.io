@@ -3,6 +3,11 @@ function autocomplete(inp, arr) {
 	
 	console.log(arr);
 
+	inp.addEventListener('focus', function (e) {
+		showLists(e.target);
+		inp.select();
+	});
+	
 	inp.addEventListener("input", function (e) {
 		showLists(e.target);
 	});
@@ -94,6 +99,4 @@ function autocomplete(inp, arr) {
 	document.addEventListener("click", function (e) {
 		closeAllLists(e.target);
 	});
-	
-	inp.addEventListener('focus', () => inp.select());
 }

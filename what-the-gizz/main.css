@@ -123,6 +123,7 @@ body {
 	margin-right: 20px;
 	margin-bottom: 0px;
 	text-align: right;
+	display: none;
 }
 #tries > div {
 	font-style: italic;
