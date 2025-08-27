@@ -1,13 +1,13 @@
 function autocomplete(inp, arr) {
 	var currentFocus;
-	
-	console.log(arr);
+
+	//console.log(arr);
 
 	inp.addEventListener('focus', function (e) {
 		showLists(e.target);
 		inp.select();
 	});
-	
+
 	inp.addEventListener("input", function (e) {
 		showLists(e.target);
 	});
@@ -28,7 +28,7 @@ function autocomplete(inp, arr) {
 			}
 		}
 	});
-	
+
 	function showLists (elmnt) {
 		var a, b, i, val = elmnt.value;
 		closeAllLists();
@@ -55,12 +55,13 @@ function autocomplete(inp, arr) {
 				a.appendChild(b);
 			}
 			*/
-			var p = arr[i].toUpperCase().search(val.toUpperCase());
+			var p = arr[i].toUpperCase().indexOf(val.toUpperCase());
+			var l = val.length;
 			if (p >= 0) {
 				b = document.createElement("DIV");
 				b.innerHTML = arr[i].substr(0, p);
-				b.innerHTML += '<strong>' + arr[i].substr(p, val.length) + '</strong>';
-				b.innerHTML += arr[i].substr(p + val.length);
+				b.innerHTML += '<strong>' + arr[i].substr(p, l) + '</strong>';
+				b.innerHTML += arr[i].substr(p + l);
 				b.innerHTML += '<input type="hidden" value="' + arr[i] + '">';
 
 				b.addEventListener("click", function(e) {
@@ -71,25 +72,24 @@ function autocomplete(inp, arr) {
 			}
 		}
 	}
-	
+
 	function addActive(x) {
 		if (!x) return false;
-		
+
 		removeActive(x);
 		if (currentFocus >= x.length) currentFocus = 0;
 		if (currentFocus < 0) currentFocus = (x.length - 1);
 		x[currentFocus].classList.add("autocomplete-active");
 	}
-	
+
 	function removeActive(x) {
 		for (var i = 0; i < x.length; i++) {
 			x[i].classList.remove("autocomplete-active");
 		}
 	}
-	
+
 	function closeAllLists(elmnt) {
 		var x = document.getElementsByClassName("autocomplete-items");
-		console.log(elmnt);
 		for (var i = 0; i < x.length; i++) {
 			if (elmnt != x[i] && elmnt != inp) {
 				x[i].parentNode.removeChild(x[i]);

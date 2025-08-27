@@ -1,4 +1,4 @@
-console.log(all_lyrics);
+//console.log(all_lyrics);
 
 // Some emojis for result display
 const symbols_correct   = ['🥳', '🤩', '😎', '😄', '😆'];
@@ -22,44 +22,62 @@ var previous_guesses = [];
 // Restore last guess count
 var num_guesses = 0;
 
+// Load song data from file
 function loadSongData() {
 	songs = [];
+	song_names = [];
+	
 	all_lyrics.albums.forEach((album) => {
 		album.songs.forEach((song) => {
 			songs.push(song);
 			song_names.push(song.name);
 		});
 	});
-	
-	song_names.sort();
+
 	console.log("Loaded songs: ", song_names);
 }
 
+// Choose a new song for the user to guess
 function chooseNewSong() {
+	// Loop until new song was found
+	var old_song = current_song;
 	while (true) {
+		// pick a song
 		current_song = randomChoice(songs);
 		current_song_name = current_song.name.toLowerCase();
 		console.log("Set current song: ", current_song.name);
-		
+
+		// prevent choosing same song again
+		if (current_song == old_song) {
+			console.log("Same song, choosing again.");
+			continue;
+		}
+
 		updateSongLyrics();
-		
-		if (num_lyrics > 2)  // require at least 2 lines of lyrics
+
+		// prevent choosing too short songs / instrumentals
+		if (num_lyrics > 2)
 			break;
 			
-		console.log("Not enough lines, choosing new song.");
+		console.log("Not enough lines, choosing again.");
 	}
 
+	// reset game data
 	num_guesses = 0;
 	previous_guesses = [];
 }
 
+// Update song lyrics data
 function updateSongLyrics() {
+	// save unique set of lines
 	uniq_lyrics = [...new Set(current_song.lyrics)];
+	
+	// count available lines
 	num_lyrics = uniq_lyrics.length;
 	console.log("Number of unique lines: ", num_lyrics);
 }
 
-// Function to choose random entry from input array
+// Function to choose random index from input array
 function randomIndex(arr) {
 	var index = Math.floor(arr.length * Math.random());
 	if (index >= arr.length)
@@ -67,52 +85,66 @@ function randomIndex(arr) {
 	return index;
 }
 
+// Function to choose random entry from input array
 function randomChoice(arr) {
 	return arr[randomIndex(arr)];
 }
 
 // Update the user prompt
 function updatePrompt() {
-	var line_index = randomIndex(uniq_lyrics);		
-	console.log("Choosing line no.: ", line_index);
-	
-	lyrics_line = uniq_lyrics[line_index];
-	uniq_lyrics.splice(line_index, 1);  // remove line
+	// pick a lyrics line
+	while (true) {
+		var line_index = randomIndex(uniq_lyrics);
+		console.log("Choosing line no.: ", line_index);
 
+		lyrics_line = uniq_lyrics[line_index];
+		uniq_lyrics.splice(line_index, 1);  // remove line from buffer
+		
+		if (lyrics_line.length > 3)
+			break;
+		
+		console.log("Line too short, choosing again.");
+	}
+
+	// show current line
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
 
 	//$('#guess').val("");
 	//$('#guess').focus();
 }
 
+// Start new game
 function resetGame() {
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
-	
+
+	// clear input field
 	$('#guess').val("");
 
 	$('#result').hide();
-	
+	$('#guess').prop('disabled', false);
 	$('#submit').prop('disabled', false);
 	$('#giveup').prop('disabled', false);
 	$('#reset').prop('disabled', false);
-	$('#guess').prop('disabled', false);
 }
 
+// Forfeit the game
 function endGame() {
 	showGameOver(true);
 }
 
-function showGameOver(forfeit = false) {		
+// Show game over message
+function showGameOver(forfeit = false) {
+	// pick a symbol
 	var symbol = randomChoice(symbols_gameover);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
-	
+
 	html_text = `
 		<span class="symbol">${symbol}</span>
-		<b>GAME OVER!</b> 
+		<b>GAME OVER!</b>
 		<span class="symbol">${symbol}</span>
 	`
 	if (! forfeit) {
@@ -126,25 +158,28 @@ function showGameOver(forfeit = false) {
 		The correct answer was: <b><span id="correct-answer">${current_song.name}</span></b>
 	`
 
+	// show message
 	$('#result').html(html_text);
 	$('#result').show();
-	
+
 	$('#submit').prop('disabled', true);
 	$('#giveup').prop('disabled', true);
 	$('#guess').prop('disabled', true);
 }
 
+// Show win message
 function showWin() {
+	// pick a symbol
 	var symbol = randomChoice(symbols_correct);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
-		guessed_text = num_guesses + " guess";	
-	
-	// score is inverse ratio between number of (wrong) guesses to number of lyrics lines
+		guessed_text = num_guesses + " guess";
+
+	// calculate score
 	//var score = 10. * (1. - (num_guesses - 1) / num_lyrics);
 	var score = -20. * Math.log(num_guesses / num_lyrics);
-	console.log("Game score: ", score);
 	var score_text = score.toFixed(0);
+	console.log("Game score: ", score);
 
 	html_text = `
 		<span class="symbol">${symbol}</span>
@@ -155,6 +190,8 @@ function showWin() {
 		<br/><br/>
 		You scored <span id="game-score">${score_text}</span> points!
 	`
+	
+	// show message
 	$('#result').html(html_text);
 	$('#result').show();
 
@@ -163,12 +200,14 @@ function showWin() {
 	$('#guess').prop('disabled', true);
 }
 
+// Show try again message
 function showTryAgain() {
-	var symbol = randomChoice(symbols_incorrect);	
+	// pick a symbol
+	var symbol = randomChoice(symbols_incorrect);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
-	
+
 	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>Incorrect!</b>
@@ -178,10 +217,13 @@ function showTryAgain() {
 		<br/>
 		Try again?
 	`
+	
+	// show message
 	$('#result').html(html_text);
 	$('#result').show();
 }
 
+// Update previous gusses
 function updateGuesses() {
 	if (previous_guesses.length > 0) {
 		$('#tries').html(`
@@ -196,33 +238,35 @@ function updateGuesses() {
 
 // Process user input
 function submitGuess() {
+	// get user input
 	var guessed_name = $('#guess').val().trim();
-	var guessed_correctly = false;
-	var game_over = false;
-	
 	console.log("Submitted guess: ", guessed_name);
+	
+	// ignore empty or repeated answers
 	if (guessed_name == "" || previous_guesses.includes(guessed_name)) {
 		console.log("Answer is empty/repeated - try again!");
 		$('#message').html('Empty or repeated answer - try again!')
 		return;
 	}
-	
+
 	$('#message').html("");
-	
+
+	// update game data
 	previous_guesses.splice(0, 0, guessed_name);  // insert at top
 	updateGuesses();
-	
+
 	num_guesses++;
 	console.log("Current guess count: ", num_guesses);
 
+	// process game status
 	if (num_guesses >= num_lyrics || uniq_lyrics.length == 0) {
 		console.log("Game over.");
 
 		showGameOver();
-	}	
+	}
 	else if (guessed_name.toLowerCase() != current_song_name) {
 		console.log("Guessed incorrectly.");
-		
+
 		updatePrompt();
 		showTryAgain();
 	}
@@ -232,7 +276,10 @@ function submitGuess() {
 	}
 }
 
+// Update info text
 function updateInfo() {
-	const modified_date = document.lastModified.split(" ")[0];
-	$('#modified').html(modified_date);
+	// get file modification date
+	const modified_text = document.lastModified.split(" ")[0];
+	
+	$('#modified').html(modified_text);
 }

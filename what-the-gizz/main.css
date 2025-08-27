@@ -130,7 +130,7 @@ a:hover {
 	margin-right: 20px;
 	margin-bottom: 0px;
 	text-align: right;
-	line-height: 1.2; 
+	line-height: 1.2;
 	display: none;
 }
 #tries > div {
@@ -157,7 +157,7 @@ a:hover {
 	margin-bottom: 0px;
 	padding-bottom: 20px;
 	text-align: left;
-	line-height: 1.3; 
+	line-height: 1.3;
 }
 
 .buttons {
@@ -190,7 +190,7 @@ button:not(:disabled):hover {
 #giveup {
 	background-color: #ffd23f;
 	border: 2px solid #ffd23f;
-	border-radius: 6px;	
+	border-radius: 6px;
 }
 
 #reset {

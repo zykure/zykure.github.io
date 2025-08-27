@@ -1,6 +1,6 @@
 # What the Gizz?!
 
-A King Gizzard inspired browser game. JavaScript only.
+A King Gizzard inspired browser game. JavaScript and HTML/CSS only.
 
 <img src="./screenshot.png" alt="Screenshot image" width="400"/>
 
