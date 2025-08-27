@@ -59,9 +59,9 @@ function autocomplete(inp, arr) {
 			if (p >= 0) {
 				b = document.createElement("DIV");
 				b.innerHTML = arr[i].substr(0, p);
-				b.innerHTML += "<strong>" + arr[i].substr(p, val.length) + "</strong>";
+				b.innerHTML += '<strong>' + arr[i].substr(p, val.length) + '</strong>';
 				b.innerHTML += arr[i].substr(p + val.length);
-				b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+				b.innerHTML += '<input type="hidden" value="' + arr[i] + '">';
 
 				b.addEventListener("click", function(e) {
 					inp.value = this.getElementsByTagName("input")[0].value;
@@ -89,6 +89,7 @@ function autocomplete(inp, arr) {
 	
 	function closeAllLists(elmnt) {
 		var x = document.getElementsByClassName("autocomplete-items");
+		console.log(elmnt);
 		for (var i = 0; i < x.length; i++) {
 			if (elmnt != x[i] && elmnt != inp) {
 				x[i].parentNode.removeChild(x[i]);

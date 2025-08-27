@@ -140,11 +140,11 @@ function showWin() {
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";	
 	
-	const max_score = 10;
 	// score is inverse ratio between number of (wrong) guesses to number of lyrics lines
-	var score = Math.round(max_score * (1. - (num_guesses - 1) / num_lyrics), 1);
+	//var score = 10. * (1. - (num_guesses - 1) / num_lyrics);
+	var score = -20. * Math.log(num_guesses / num_lyrics);
 	console.log("Game score: ", score);
-	var score_text = score.toFixed(1) + " / " + max_score;
+	var score_text = score.toFixed(0);
 
 	html_text = `
 		<span class="symbol">${symbol}</span>
