@@ -43,13 +43,14 @@ function chooseNewSong() {
 		
 		updateSongLyrics();
 		
-		if (num_lyrics > 3)
+		if (num_lyrics > 2)  // require at least 2 lines of lyrics
 			break;
 			
 		console.log("Not enough lines, choosing new song.");
 	}
 
 	num_guesses = 0;
+	previous_guesses = [];
 }
 
 function updateSongLyrics() {
@@ -85,6 +86,7 @@ function updatePrompt() {
 function resetGame() {
 	chooseNewSong();
 	updatePrompt();
+	updateGuesses();
 	
 	$('#guess').val("");
 
@@ -180,6 +182,12 @@ function showTryAgain() {
 	$('#result').show();
 }
 
+function updateGuesses() {
+	$('#tries').html(`
+		Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
+	`);
+}
+
 // Process user input
 function submitGuess() {
 	var guessed_name = $('#guess').val().trim();
@@ -206,9 +214,7 @@ function submitGuess() {
 	$('#message').html("");
 
 	previous_guesses.splice(0, 0, guessed_name);  // insert at top
-	$('#tries').html(`
-		Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
-	`);
+	updateGuesses();
 	
 	num_guesses++;
 	console.log("Current guess count: ", num_guesses);
