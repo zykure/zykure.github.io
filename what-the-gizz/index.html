@@ -14,6 +14,7 @@
 		<script language="javascript">
 			$(document).ready(function() {
 				autocomplete(document.getElementById("guess"), song_names);
+				updateInfo();$
 				resetGame();
 			});
 		</script>
@@ -50,7 +51,7 @@
 		<p id="tries"></p>
 		
 		<p id="info">
-			A King Gizzard inspired browser game. JavaScript only.
+			A King Gizzard inspired browser game. JavaScript only. Updated <span id="modified">sometime</span>.
 			<br/>
 			Source code on <a href="https://github.com/zykure/zykure.github.io">GitHub</a>.
 			Get all Gizz lyrics as an e-book <a href="https://github.com/zykure/KGLW-TheBook/releases">here</a>.

@@ -231,3 +231,8 @@ function submitGuess() {
 		showWin();
 	}
 }
+
+function updateInfo() {
+	const modified_date = document.lastModified.split(" ")[0];
+	$('#modified').html(modified_date);
+}
