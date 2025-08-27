@@ -1,5 +1,5 @@
 function autocomplete(inp, arr) {
-	var currentFocus;
+	var currentFocus = -1;
 
 	//console.log(arr);
 
@@ -23,8 +23,14 @@ function autocomplete(inp, arr) {
 			addActive(x);
 		} else if (e.keyCode == 13) { // enter
 			e.preventDefault();
+			console.log(e.keyCode, x, currentFocus);
 			if (currentFocus > -1) {
 				if (x) x[currentFocus].click();
+			}
+			if (!x || currentFocus < 0) {
+				closeAllLists();
+				x = document.getElementById('submit');
+				if (x) x.focus();
 			}
 		}
 	});
