@@ -13,7 +13,7 @@
 		<script type="text/javascript" src="autocomplete.js"></script>
 		<script language="javascript">
 			$(document).ready(function() {
-				autocomplete(document.getElementById("guessed-name"), song_names);
+				autocomplete(document.getElementById("guess"), song_names);
 				resetGame();
 			});
 		</script>
@@ -31,40 +31,23 @@
 			???
 		</h3>
 
-		<form id="next-guess" name="next-guess">
-			<label for="guessed-name">Song Name:</label><br/>
+		<form id="game-form" name="game-form">
+			<label for="guess">Guess the song title:</label><br/>
 			<div class="autocomplete">
-				<input type="text" id="guessed-name" name="guessed-name" size="30"/>
+				<input type="text" id="guess" name="guess" size="30"/>
 			</div>
 		</form>
 
-		<button type="button" id="submit" value="submit" onClick="submitGuess()">Submit!</button>
-		<button type="button" id="reset" value="reset" onClick="resetGame()">Reset</button>
-
-		<p id="result-incorrect" class="result">
-			<span id="symbol-incorrect-1" class="symbol"></span>
-			<b>Incorrect!</b>
-			<span id="symbol-incorrect-2" class="symbol"></span>
-			<br/>
-			You've used <span id="guessed-count-incorrect">0 guesses</span> so far. Try again?
+		<p class="buttons">		
+			<button type="button" id="submit" value="submit" onClick="submitGuess()">Submit!</button>
+			<button type="button" id="giveup" value="giveup" onClick="endGame()">Give Up!</button>
+			<button type="button" id="reset" value="reset" onClick="resetGame()">Reset</button>
+			<div id="message"></div>
 		</p>
+		
+		<p id="result" class="result"></p>
+		
+		<p id="tries"></p>
 
-		<p id="result-correct" class="result">
-			<span id="symbol-correct-1" class="symbol"></span>
-			<b>Correct!</b>
-			<span id="symbol-correct-2" class="symbol"></span>
-			<br/>
-			You've used <span id="guessed-count-correct">0 guesses</span> to get there.
-		</p>
-
-		<p id="result-gameover" class="result">
-			<span id="symbol-gameover-1" class="symbol"></span>
-			<b>GAME OVER!</b> 
-			<span id="symbol-gameover-2" class="symbol"></span>
-			<br/>
-			You've used <span id="guessed-count-gameover">0 guesses</span> and there are no more lyrics left.
-			<br/>
-			The correct answer was: <span id="correct-answer"></span>
-		</p>
 	</body>
 </html>

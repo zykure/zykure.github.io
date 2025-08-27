@@ -17,8 +17,10 @@ var current_song_name = null;
 var uniq_lyrics = [];
 var num_lyrics = 0;
 
+var previous_guesses = [];
+
 // Restore last guess count
-var guessed_count = 0;
+var num_guesses = 0;
 
 function loadSongData() {
 	songs = [];
@@ -47,7 +49,7 @@ function chooseNewSong() {
 		console.log("Not enough lines, choosing new song.");
 	}
 
-	guessed_count = 0;
+	num_guesses = 0;
 }
 
 function updateSongLyrics() {
@@ -77,33 +79,109 @@ function updatePrompt() {
 	uniq_lyrics.splice(line_index, 1);  // remove line
 
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
-	//$('#guessed-name').val("");
+	//$('#guess').val("");	
 }
 
 function resetGame() {
 	chooseNewSong();
 	updatePrompt();
 	
-	$('#guessed-name').val("");
+	$('#guess').val("");
 
 	$('#result-correct').hide();
 	$('#result-incorrect').hide();
 	$('#result-gameover').hide();
+	
 	$('#submit').prop('disabled', false);
+	$('#giveup').prop('disabled', false);
+	$('#reset').prop('disabled', false);
+	$('#guess').prop('disabled', false);
+}
+
+function endGame() {
+	showGameOver();
+}
+
+function showGameOver() {		
+	var symbol = randomChoice(symbols_gameover);
+	var guessed_text = num_guesses + " guesses";
+	if (num_guesses == 1)
+		guessed_text = num_guesses + " guess";
+
+	$('#result').html(`
+		<span class="symbol">${symbol}</span>
+		<b>GAME OVER!</b> 
+		<span class="symbol">${symbol}</span>
+		<br/>
+		You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
+		<br/><br/>
+		The correct answer was: <b><span id="correct-answer">${current_song.name}</span></b>
+	`);
+	$('#result').show();
+	
+	$('#submit').prop('disabled', true);
+	$('#giveup').prop('disabled', true);
+	$('#guess').prop('disabled', true);
+}
+
+function showWin() {
+	var symbol = randomChoice(symbols_correct);
+	var guessed_text = num_guesses + " guesses";
+	if (num_guesses == 1)
+		guessed_text = num_guesses + " guess";	
+	
+	const max_score = 10;
+	var score = Math.round(max_score * (1. - num_guesses / num_lyrics), 1);
+	console.log("Game score: ", score);
+	var score_text = score.toFixed(1) + " / " + max_score;
+
+	$('#result').html(`
+		<span class="symbol">${symbol}</span>
+		<b>Correct!</b>
+		<span class="symbol">${symbol}</span>
+		<br/>
+		You've used <span id="guessed-count">${guessed_text}</span> to get there.
+		<br/><br/>
+		You scored <span id="game-score">${score_text}</span> points!
+	`);
+	$('#result').show();
+
+	$('#submit').prop('disabled', true);
+	$('#giveup').prop('disabled', true);
+	$('#guess').prop('disabled', true);
+}
+
+function showTryAgain() {
+	var symbol = randomChoice(symbols_incorrect);	
+	var guessed_text = num_guesses + " guesses";
+	if (num_guesses == 1)
+		guessed_text = num_guesses + " guess";
+	
+	$('#result').html(`
+		<span class="symbol">${symbol}</span>
+		<b>Incorrect!</b>
+		<span class="symbol">${symbol}</span>
+		<br/>
+		You've used <span id="guessed-count">${guessed_text}</span> so far.
+		<br/>
+		Try again?
+	`);
+	$('#result').show();
 }
 
 // Process user input
 function submitGuess() {
-	var guessed_name = $('#guessed-name').val().trim().toLowerCase();
+	var guessed_name = $('#guess').val().trim();
 	var guessed_correctly = false;
 	var game_over = false;
 	
 	console.log("Submitted guess: ", guessed_name);
-	if (guessed_name == "") {
-		console.log("Answer is empty - try again!");
+	if (guessed_name == "" || previous_guesses.includes(guessed_name)) {
+		console.log("Answer is empty/repeated - try again!");
+		$('#message').html('Empty or repeated answer - try again!')
 		return;
 	}
-	else if (guessed_name != current_song_name) {
+	else if (guessed_name.toLowerCase() != current_song_name) {
 		guessed_correctly = false;
 		console.log("Guessed incorrectly.");
 		
@@ -113,47 +191,24 @@ function submitGuess() {
 		guessed_correctly = true;
 		console.log("Guessed correctly.");
 	}
+	
+	$('#message').html("");
 
-	guessed_count++;
-	console.log("Current guess count: ", guessed_count);
+	previous_guesses.splice(0, 0, guessed_name);  // insert at top
+	$('#tries').html(`
+		Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
+	`);
+	
+	num_guesses++;
+	console.log("Current guess count: ", num_guesses);
 
-	if (guessed_count >= num_lyrics || uniq_lyrics.length == 0)
+	if (num_guesses >= num_lyrics || uniq_lyrics.length == 0)
 		game_over = true;
 	
-	var guessed_text = guessed_count + " guesses";
-	if (guessed_count == 1) {
-		guessed_text = guessed_count + " guess";
-	}
-	
-	if (game_over) {
-		var symbol = randomChoice(symbols_gameover);
-		$('#symbol-gameover-1').html(symbol);
-		$('#symbol-gameover-2').html(symbol);
-		$('#guessed-count-gameover').html(guessed_text);				
-		$('#correct-answer').html(current_song.name);
-		$('#result-correct').hide();
-		$('#result-incorrect').hide();
-		$('#result-gameover').show();
-		$('#submit').prop('disabled', true);
-	}
-	else if (guessed_correctly) {
-		var symbol = randomChoice(symbols_correct);
-		$('#symbol-correct-1').html(symbol);
-		$('#symbol-correct-2').html(symbol);
-		$('#guessed-count-correct').html(guessed_text);				
-		$('#result-correct').show();
-		$('#result-incorrect').hide();
-		$('#result-gameover').hide();
-		$('#submit').prop('disabled', true);
-	}
-	else {
-		var symbol = randomChoice(symbols_incorrect);
-		$('#symbol-incorrect-1').html(symbol);
-		$('#symbol-incorrect-2').html(symbol);
-		$('#guessed-count-incorrect').html(guessed_text);				
-		$('#result-incorrect').show();
-		$('#result-correct').hide();
-		$('#result-gameover').hide();
-		$('#submit').prop('disabled', false);
-	}
+	if (game_over)
+		showGameOver();
+	else if (guessed_correctly)
+		showWin();
+	else
+		showTryAgain();
 }
