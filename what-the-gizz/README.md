@@ -4,7 +4,9 @@ A King Gizzard inspired browser game. JavaScript and HTML/CSS only.
 
 <img src="./screenshot.png" alt="Screenshot image" width="400"/>
 
-Try it here: https://zykure.github.io/what-the-gizz/
+Try it here:
+* https://io.zykure.de/what-the-gizz/
+* https://zykure.github.io/what-the-gizz/ [DEMO]
 
 
 ## Overview
