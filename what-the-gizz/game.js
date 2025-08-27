@@ -80,7 +80,8 @@ function updatePrompt() {
 	uniq_lyrics.splice(line_index, 1);  // remove line
 
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
-	//$('#guess').val("");	
+	//$('#guess').val("");
+	$('#lyrics-line').focus();
 }
 
 function resetGame() {
@@ -200,32 +201,28 @@ function submitGuess() {
 		$('#message').html('Empty or repeated answer - try again!')
 		return;
 	}
-	else if (guessed_name.toLowerCase() != current_song_name) {
-		guessed_correctly = false;
-		console.log("Guessed incorrectly.");
-		
-		updatePrompt();
-	}
-	else {
-		guessed_correctly = true;
-		console.log("Guessed correctly.");
-	}
 	
 	$('#message').html("");
-
+	
 	previous_guesses.splice(0, 0, guessed_name);  // insert at top
 	updateGuesses();
 	
 	num_guesses++;
 	console.log("Current guess count: ", num_guesses);
 
-	if (num_guesses >= num_lyrics || uniq_lyrics.length == 0)
-		game_over = true;
-	
-	if (game_over)
+	if (num_guesses >= num_lyrics || uniq_lyrics.length == 0) {
+		console.log("Game over.");
+
 		showGameOver();
-	else if (guessed_correctly)
-		showWin();
-	else
+	}	
+	else if (guessed_name.toLowerCase() != current_song_name) {
+		console.log("Guessed incorrectly.");
+		
+		updatePrompt();
 		showTryAgain();
+	}
+	else {
+		console.log("Guessed correctly.");
+		showWin();
+	}
 }
