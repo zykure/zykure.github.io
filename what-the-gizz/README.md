@@ -4,6 +4,9 @@ A King Gizzard inspired browser game. JavaScript only.
 
 <img src="./screenshot.png" alt="Screenshot image" width="400"/>
 
+Try it here: https://zykure.github.io/what-the-gizz/
+
+
 ## Overview
 
 This game randomly picks a Gizz song and shows random lines of lyrics.
