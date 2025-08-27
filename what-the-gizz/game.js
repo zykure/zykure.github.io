@@ -80,9 +80,9 @@ function updatePrompt() {
 	uniq_lyrics.splice(line_index, 1);  // remove line
 
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
+
 	//$('#guess').val("");
-	
-	$('#guess').focus();
+	//$('#guess').focus();
 }
 
 function resetGame() {
