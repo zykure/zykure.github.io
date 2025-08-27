@@ -88,8 +88,7 @@ body {
 	border: 2px solid #00f572;
 	border-radius: 12px;
 	padding: 20px;
-	margin: 50px auto;
-	width: 800px;
+	margin: 50px 100px;
 }
 
 #game-form {
@@ -98,9 +97,8 @@ body {
 
 #guess {
 	font-size: 110%;
-	margin: 10px auto;
+	margin: 10px;
 	padding: 6px;
-	width: 500px;
 	color: #FFF;
 	background-color: #666;
 	border: 3px solid #067bc2;

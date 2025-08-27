@@ -99,24 +99,32 @@ function resetGame() {
 }
 
 function endGame() {
-	showGameOver();
+	showGameOver(true);
 }
 
-function showGameOver() {		
+function showGameOver(forfeit = false) {		
 	var symbol = randomChoice(symbols_gameover);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
-
-	$('#result').html(`
+	
+	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>GAME OVER!</b> 
 		<span class="symbol">${symbol}</span>
-		<br/>
-		You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
+	`
+	if (! forfeit) {
+		html_text += `
+			<br/>
+			You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
+		`
+	}
+	html_text += `
 		<br/><br/>
 		The correct answer was: <b><span id="correct-answer">${current_song.name}</span></b>
-	`);
+	`
+
+	$('#result').html(html_text);
 	$('#result').show();
 	
 	$('#submit').prop('disabled', true);
@@ -131,11 +139,12 @@ function showWin() {
 		guessed_text = num_guesses + " guess";	
 	
 	const max_score = 10;
-	var score = Math.round(max_score * (1. - num_guesses / num_lyrics), 1);
+	// score is inverse ratio between number of (wrong) guesses to number of lyrics lines
+	var score = Math.round(max_score * (1. - (num_guesses - 1) / num_lyrics), 1);
 	console.log("Game score: ", score);
 	var score_text = score.toFixed(1) + " / " + max_score;
 
-	$('#result').html(`
+	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>Correct!</b>
 		<span class="symbol">${symbol}</span>
@@ -143,7 +152,8 @@ function showWin() {
 		You've used <span id="guessed-count">${guessed_text}</span> to get there.
 		<br/><br/>
 		You scored <span id="game-score">${score_text}</span> points!
-	`);
+	`
+	$('#result').html(html_text);
 	$('#result').show();
 
 	$('#submit').prop('disabled', true);
@@ -157,7 +167,7 @@ function showTryAgain() {
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
 	
-	$('#result').html(`
+	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>Incorrect!</b>
 		<span class="symbol">${symbol}</span>
@@ -165,7 +175,8 @@ function showTryAgain() {
 		You've used <span id="guessed-count">${guessed_text}</span> so far.
 		<br/>
 		Try again?
-	`);
+	`
+	$('#result').html(html_text);
 	$('#result').show();
 }
 
