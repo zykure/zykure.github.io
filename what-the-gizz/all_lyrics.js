@@ -839,7 +839,7 @@ const all_lyrics =
             "For it is beautiful out there",
             "And there's a lot to see",
             "Hope I can teach you to see",
-            "Tthe splendour of the moment",
+            "The splendour of the moment",
             "Hope you can see the beauty",
             "Within the grim world's ugly mess",
             "Butterfly 3000",
