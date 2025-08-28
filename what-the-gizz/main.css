@@ -19,21 +19,19 @@ body {
 }
 
 @keyframes wobble {
-	0% {
-		transform: rotate(0deg);
-	}
-	25% {
-		transform: rotate(2.5deg);
-	}
-	50% {
-		transform: rotate(0deg);
-	}
-	75% {
-		transform: rotate(-2.5deg);
-	}
-	100% {
-		transform: rotate(0deg);
-	}
+	   0% { transform: rotate(0deg); }
+	 8.3% { transform: rotate(3.29deg); }
+	16.7% { transform: rotate(0deg); }
+	25.0% { transform: rotate(-2.46deg); }
+	33.3% { transform: rotate(0deg); }
+	41.7% { transform: rotate(1.83deg); }
+	50.0% { transform: rotate(0deg); }
+	58.3% { transform: rotate(-1.29deg); }
+	66.7% { transform: rotate(0deg); }
+	75.0% { transform: rotate(0.82deg); }
+	83.3% { transform: rotate(0deg); }
+	91.7% { transform: rotate(-0.39deg); }
+   100.0% { transform: rotate(0deg); }
 }
 
 a {
@@ -46,7 +44,7 @@ a:hover {
 .result {
 	font-size: 120%;
 	margin-top: 50px;
-	animation: wobble 2.2s linear 0s infinite;
+	animation: wobble 2s linear 0s;
 }
 
 .symbol {
@@ -178,9 +176,9 @@ button {
 button:disabled {
 	background-color: #94908b !important;
 }
-button:not(:disabled):hover,
-button:not(:disabled):focus {
-	animation: wobble .6s linear 0s infinite;
+button:not(:disabled):hover
+/*button:not(:disabled):focus*/ {
+	animation: wobble .7s linear 0s infinite;
 	cursor: pointer;
 	opacity: 1;
 }

@@ -2,7 +2,7 @@ function autocomplete(inp, items) {
 	var currentFocus = -1;
 	const arr = items.toSorted();
 
-	//console.log(arr);
+    //console.log(arr);
 
 	inp.addEventListener('focus', function (e) {
 		inp.select();
@@ -17,7 +17,8 @@ function autocomplete(inp, items) {
 	});
 
 	inp.addEventListener("focusout", function (e) {
-		closeAllLists(null);
+        if (e.relatedTarget)
+      		closeAllLists(e.relatedTarget);
 	});
 
 	document.addEventListener("click", function (e) {
@@ -25,9 +26,12 @@ function autocomplete(inp, items) {
 	});
 
 	inp.addEventListener("keydown", function(e) {
-		//showLists(e.target);
 		var x = document.getElementById(this.id + "autocomplete-list");
 		if (x) x = x.getElementsByTagName("div");
+        if (!x) {
+            showLists(e.target);
+            return;
+        }
 
 		if (e.keyCode == 40) { // down
 			currentFocus++;
