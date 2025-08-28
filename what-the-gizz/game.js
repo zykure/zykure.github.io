@@ -108,9 +108,9 @@ function updatePrompt() {
 
 	// show current line
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
+	$('#lyrics-line').focus();
 
 	//$('#guess').val("");
-	$('#guess').focus();
 }
 
 // Start new game
@@ -118,9 +118,11 @@ function resetGame() {
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
-
+	
 	// clear input field
 	$('#guess').val("");
+
+	$('#lyrics-line').focus();
 
 	$('#result').hide();
 	$('#guess').prop('disabled', false);

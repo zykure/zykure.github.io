@@ -5,6 +5,7 @@ function autocomplete(inp, items) {
     //console.log(arr);
 
 	inp.addEventListener('focus', function (e) {
+		showLists(e.target);
 		inp.select();
 	});
 
@@ -17,8 +18,14 @@ function autocomplete(inp, items) {
 	});
 
 	inp.addEventListener("focusout", function (e) {
-        if (e.relatedTarget)
-      		closeAllLists(e.relatedTarget);
+		var x = document.getElementById(this.id + "autocomplete-list");
+		console.log(e);
+		closeAllLists(null);
+		
+		// fix focus behavior (closing lists brings focus back to input)
+		if (e.relatedTarget == x)
+			document.getElementById('submit').focus();
+		
 	});
 
 	document.addEventListener("click", function (e) {
