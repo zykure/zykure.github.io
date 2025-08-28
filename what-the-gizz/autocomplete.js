@@ -20,7 +20,8 @@ function autocomplete(inp, items) {
 	inp.addEventListener("focusout", function (e) {
 		var x = document.getElementById(this.id + "autocomplete-list");
 		console.log(e);
-		closeAllLists(null);
+		if (e.relatedTarget)
+			closeAllLists(null);
 		
 		// fix focus behavior (closing lists brings focus back to input)
 		if (e.relatedTarget == x)
