@@ -272,7 +272,7 @@ const all_lyrics =
             "You already told me to",
             "You said",
             "It's alright",
-            "Amd push me down, I will not crack",
+            "And push me down, I will not crack",
             "You're just a monkey with your claws in my back",
             "I said it, and you heard",
             "That murky bottle's cuttin' me some slack",
