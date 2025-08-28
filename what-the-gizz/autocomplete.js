@@ -1,10 +1,10 @@
-function autocomplete(inp, arr) {
+function autocomplete(inp, items) {
 	var currentFocus = -1;
+	const arr = items.toSorted();
 
 	//console.log(arr);
 
 	inp.addEventListener('focus', function (e) {
-		showLists(e.target);
 		inp.select();
 	});
 
@@ -12,9 +12,23 @@ function autocomplete(inp, arr) {
 		showLists(e.target);
 	});
 
+	inp.addEventListener("click", function (e) {
+		showLists(e.target);
+	});
+
+	inp.addEventListener("focusout", function (e) {
+		closeAllLists(null);
+	});
+
+	document.addEventListener("click", function (e) {
+		closeAllLists(e.target);
+	});
+
 	inp.addEventListener("keydown", function(e) {
+		//showLists(e.target);
 		var x = document.getElementById(this.id + "autocomplete-list");
 		if (x) x = x.getElementsByTagName("div");
+
 		if (e.keyCode == 40) { // down
 			currentFocus++;
 			addActive(x);
@@ -23,22 +37,21 @@ function autocomplete(inp, arr) {
 			addActive(x);
 		} else if (e.keyCode == 13) { // enter
 			e.preventDefault();
-			console.log(e.keyCode, x, currentFocus);
-			if (currentFocus > -1) {
-				if (x) x[currentFocus].click();
-			}
-			if (!x || currentFocus < 0) {
-				closeAllLists();
-				x = document.getElementById('submit');
-				if (x) x.focus();
-			}
+            if (currentFocus > -1) {
+                if (x) x[currentFocus].click();
+            }
+			// close menu and focus submit button
+  			closeAllLists();
+            if (!x || x.length == 0) {
+                document.getElementById('submit').click();
+            }
 		}
 	});
 
 	function showLists (elmnt) {
 		var a, b, i, val = elmnt.value;
 		closeAllLists();
-		if (!val) { return false;}
+		if (!val) val = "";
 		currentFocus = -1;
 
 		a = document.createElement("DIV");
@@ -63,13 +76,15 @@ function autocomplete(inp, arr) {
 			*/
 			var p = arr[i].toUpperCase().indexOf(val.toUpperCase());
 			var l = val.length;
-			if (p >= 0) {
+			if (l == 0 || p >= 0) {
+				// add entries that match input, or all if input is empty
 				b = document.createElement("DIV");
 				b.innerHTML = arr[i].substr(0, p);
 				b.innerHTML += '<strong>' + arr[i].substr(p, l) + '</strong>';
 				b.innerHTML += arr[i].substr(p + l);
 				b.innerHTML += '<input type="hidden" value="' + arr[i] + '">';
 
+				// select item on click
 				b.addEventListener("click", function(e) {
 					inp.value = this.getElementsByTagName("input")[0].value;
 					closeAllLists();
@@ -102,8 +117,4 @@ function autocomplete(inp, arr) {
 			}
 		}
 	}
-
-	document.addEventListener("click", function (e) {
-		closeAllLists(e.target);
-	});
 }

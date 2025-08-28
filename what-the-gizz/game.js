@@ -26,7 +26,7 @@ var num_guesses = 0;
 function loadSongData() {
 	songs = [];
 	song_names = [];
-	
+
 	all_lyrics.albums.forEach((album) => {
 		album.songs.forEach((song) => {
 			songs.push(song);
@@ -58,7 +58,7 @@ function chooseNewSong() {
 		// prevent choosing too short songs / instrumentals
 		if (num_lyrics > 2)
 			break;
-			
+
 		console.log("Not enough lines, choosing again.");
 	}
 
@@ -71,7 +71,7 @@ function chooseNewSong() {
 function updateSongLyrics() {
 	// save unique set of lines
 	uniq_lyrics = [...new Set(current_song.lyrics)];
-	
+
 	// count available lines
 	num_lyrics = uniq_lyrics.length;
 	console.log("Number of unique lines: ", num_lyrics);
@@ -99,10 +99,10 @@ function updatePrompt() {
 
 		lyrics_line = uniq_lyrics[line_index];
 		uniq_lyrics.splice(line_index, 1);  // remove line from buffer
-		
+
 		if (lyrics_line.length > 3)
 			break;
-		
+
 		console.log("Line too short, choosing again.");
 	}
 
@@ -110,7 +110,7 @@ function updatePrompt() {
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
 
 	//$('#guess').val("");
-	//$('#guess').focus();
+	$('#guess').focus();
 }
 
 // Start new game
@@ -190,7 +190,7 @@ function showWin() {
 		<br/><br/>
 		You scored <span id="game-score">${score_text}</span> points!
 	`
-	
+
 	// show message
 	$('#result').html(html_text);
 	$('#result').show();
@@ -217,7 +217,7 @@ function showTryAgain() {
 		<br/>
 		Try again?
 	`
-	
+
 	// show message
 	$('#result').html(html_text);
 	$('#result').show();
@@ -241,19 +241,21 @@ function submitGuess() {
 	// get user input
 	var guessed_name = $('#guess').val().trim();
 	console.log("Submitted guess: ", guessed_name);
-	
+
 	// ignore empty or repeated answers
-	if (guessed_name == "" || previous_guesses.includes(guessed_name)) {
-		console.log("Answer is empty/repeated - try again!");
-		$('#message').html('Empty or repeated answer - try again!')
+	if (guessed_name != "" && previous_guesses.includes(guessed_name)) {
+		console.log("You already tried this song - choose again!");
+		$('#message').html('Repeated answer - try again!')
 		return;
 	}
 
 	$('#message').html("");
 
 	// update game data
-	previous_guesses.splice(0, 0, guessed_name);  // insert at top
-	updateGuesses();
+	if (guessed_name != "") {
+		previous_guesses.splice(0, 0, guessed_name);  // insert at top
+		updateGuesses();
+	}
 
 	num_guesses++;
 	console.log("Current guess count: ", num_guesses);
@@ -280,6 +282,6 @@ function submitGuess() {
 function updateInfo() {
 	// get file modification date
 	const modified_text = document.lastModified.split(" ")[0];
-	
+
 	$('#modified').html(modified_text);
 }

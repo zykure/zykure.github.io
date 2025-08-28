@@ -60,17 +60,19 @@ a:hover {
 
 .autocomplete-items {
 	position: absolute;
-	margin-top: -10px;
+	margin-top: -9px;
 	z-index: 99;
 	top: 100%;
 	left: 0;
 	right: 0;
+	max-height: 15em;
+	overflow-y: scroll;
 }
 .autocomplete-items div {
 	margin: 0px 16px;
 	cursor: pointer;
 	background-color: #666;
-	border: 2px solid #067bc2;
+	border: 3px solid #067bc2;
 	border-top: none;
 }
 .autocomplete-items div:hover {
@@ -116,13 +118,14 @@ a:hover {
 #guess:disabled {
 	border-color: #666 !important;
 }
-#guess:not(:disabled):hover {
+#guess:not(:disabled):hover,
+#guess:not(:disabled):focus {
 	transform: scale(1.05);
 	border: 3px solid #129ff8;
 }
 
 #tries {
-    position: fixed;
+	position: fixed;
 	bottom: 0%;
 	right: 0%;
 	font-size: 80%;
@@ -137,8 +140,8 @@ a:hover {
 	font-style: italic;
 	color: #999;
 	background-image: linear-gradient(#999, #333);
-    color: transparent;
-    background-clip: text;
+	color: transparent;
+	background-clip: text;
 	padding-bottom: 20px;
 }
 
@@ -175,7 +178,8 @@ button {
 button:disabled {
 	background-color: #94908b !important;
 }
-button:not(:disabled):hover {
+button:not(:disabled):hover,
+button:not(:disabled):focus {
 	animation: wobble .6s linear 0s infinite;
 	cursor: pointer;
 	opacity: 1;
