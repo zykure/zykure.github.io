@@ -2,7 +2,7 @@
 
 A King Gizzard inspired browser game. JavaScript and HTML/CSS only.
 
-<img src="./screenshot.png" alt="Screenshot image" width="400"/>
+<img src="./screenrec.webp" alt="Screenshot image" width="320"/>
 
 Try it here:
 * https://io.zykure.de/what-the-gizz/
