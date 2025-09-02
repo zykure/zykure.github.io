@@ -22,6 +22,11 @@ var previous_guesses = [];
 // Restore last guess count
 var num_guesses = 0;
 
+var highscore = parseInt(getCookie('highscore'));
+if (!highscore)
+	highscore = 0;
+console.log("Last highscore:", highscore);
+
 // Load song data from file
 function loadSongData() {
 	songs = [];
@@ -118,6 +123,7 @@ function resetGame() {
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
+	updateHighscore();
 	
 	// clear input field
 	$('#guess').val("");
@@ -182,7 +188,7 @@ function showWin() {
 	var score = -20. * Math.log(num_guesses / num_lyrics);
 	var score_text = score.toFixed(0);
 	console.log("Game score: ", score);
-
+	
 	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>Correct!</b>
@@ -192,6 +198,18 @@ function showWin() {
 		<br/><br/>
 		You scored <span id="game-score">${score_text}</span> points!
 	`
+
+	if (!highscore || score.toFixed(0) > highscore.toFixed(0)) {
+		highscore = score;
+		setCookie('highscore', highscore, 90);  // save for 90 days
+
+		html_text += `
+			<br/>
+			<b>🎉 NEW HIGHSCORE! 🎉</b>
+		`
+		
+		updateHighscore();
+	}
 
 	// show message
 	$('#result').html(html_text);
@@ -225,12 +243,39 @@ function showTryAgain() {
 	$('#result').show();
 }
 
-// Update previous gusses
+// Update highscore
+function updateHighscore() {
+	var html_text = "";
+	
+	if (highscore > 0) {
+		var score_text = highscore.toFixed(0);
+		html_text = `
+			Your highscore: ${score_text}<br/>
+		`
+	}
+	
+	if (html_text) {
+		$('#highscore').html(html_text);
+		$('#highscore').show();
+	}
+	else {
+		$('#highscore').hide();
+	}
+}
+
+// Update previous guesses
 function updateGuesses() {
+	var html_text = "";
+	
 	if (previous_guesses.length > 0) {
-		$('#tries').html(`
-			Previous guesses: <div>${previous_guesses.join("<br/>")}</div>
-		`);
+		html_text += `
+			Previous guesses:<br/>
+			<div>${previous_guesses.join("<br/>")}</div>
+		`
+	}
+
+	if (html_text) {
+		$('#tries').html(html_text);
 		$('#tries').show();
 	}
 	else {

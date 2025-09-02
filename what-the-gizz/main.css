@@ -122,6 +122,19 @@ a:hover {
 	border: 3px solid #129ff8;
 }
 
+#highscore {
+	position: fixed;
+	top: 0%;
+	right: 0%;
+	font-size: 80%;
+	color: #aaa;
+	margin-right: 20px;
+	margin-bottom: 0px;
+	text-align: right;
+	line-height: 1.2;
+	display: none;
+}
+
 #tries {
 	position: fixed;
 	bottom: 0%;

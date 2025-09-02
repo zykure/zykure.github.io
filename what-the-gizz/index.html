@@ -11,12 +11,13 @@
 			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
 			  crossorigin="anonymous"></script>
 		<script type="text/javascript" src="all_lyrics.js"></script>
+		<script type="text/javascript" src="cookie.js"></script>
 		<script type="text/javascript" src="game.js"></script>
 		<script type="text/javascript" src="autocomplete.js"></script>
 		<script language="javascript">
 			$(document).ready(function() {
 				autocomplete(document.getElementById("guess"), song_names);
-				updateInfo();$
+				updateInfo();
 				resetGame();
 			});
 		</script>
@@ -52,8 +53,10 @@
 		</p>
 
 		<p id="result" class="result"></p>
-
+		
 		<p id="tries"></p>
+		
+		<p id="highscore"></p>
 
 		<p id="info">
 			A King Gizzard inspired browser game. Updated <span id="modified">sometime</span>.
