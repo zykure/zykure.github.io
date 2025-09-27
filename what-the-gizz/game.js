@@ -10,23 +10,28 @@ var songs = [];
 var song_names = [];
 loadSongData();
 
-// Setup internal variables
+// The song to guess in this round
 var current_song = null;
 var current_song_name = null;
 
+// Lyrics lines in this round (after input filter)
 var uniq_lyrics = [];
 var num_lyrics = 0;
 
+// List of previously guessed songs in this round
 var previous_guesses = [];
-
-// Restore last guess count
 var num_guesses = 0;
 
+// Keep track of reset button presses (2nd time resets win streak)
+var reset_once = 0;
+
+// Restore highscore from cookie
 var highscore = parseInt(getCookie('highscore'));
 if (!highscore)
 	highscore = 0;
 console.log("Last highscore:", highscore);
 
+// Restore win streak from cookie
 var streak = parseInt(getCookie('streak'));
 if (!streak)
 	streak = 0;
@@ -125,6 +130,16 @@ function updatePrompt() {
 
 // Start new game
 function resetGame() {
+	// pressing reset twice in a row reset the win streak
+	if (streak > 0 && reset_once == 0) {
+		$('#message').html('Pressing RESET (again) will lose the win streak.')
+	}
+	if (reset_once >= 1) {
+		streak = 0;
+		reset_once = 0;
+	}
+	reset_once++;
+	
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
@@ -157,6 +172,8 @@ function showGameOver(forfeit_game = false) {
 		guessed_text = num_guesses + " guess";
 
 	streak = 0;  // game over loses current streak
+	console.log("Win streak lost!");
+	updateStreak();
 
 	html_text = `
 		<span class="symbol">${symbol}</span>
@@ -181,6 +198,8 @@ function showGameOver(forfeit_game = false) {
 	$('#submit').prop('disabled', true);
 	$('#giveup').prop('disabled', true);
 	$('#guess').prop('disabled', true);
+	
+	reset_once = 0;
 }
 
 // Show win message
@@ -207,25 +226,37 @@ function showWin() {
 		You scored <span id="game-score">${score_text}</span> points!
 	`
 
+	// update win streak
+	streak++;
+	console.log("Win streak: ", streak);
+	updateStreak();
+	
+	// show current streak as stars
+	var streak_text = "";
+	if (streak > 1)
+		streak_text = '⭐'.repeat(streak)
+	
+	if (streak_text) {
+		html_text += `
+			<br/>
+			Win streak: ${streak_text}
+		`
+	}
+
+	// show new highscore message
 	if (!highscore || score.toFixed(0) > highscore.toFixed(0)) {
 		highscore = score;
-
+		updateHighscore();
+		
 		html_text += `
 			<br/>
 			<b>🎉 NEW HIGHSCORE! 🎉</b>
 		`
-		
-		updateHighscore();
 	}
 
 	if (!streak)
 		streak = 0;
 	
-	streak++;
-	console.log("Win streak: ", streak);
-
-	updateStreak();
-
 	// show message
 	$('#result').html(html_text);
 	$('#result').show();
@@ -233,6 +264,8 @@ function showWin() {
 	$('#submit').prop('disabled', true);
 	$('#giveup').prop('disabled', true);
 	$('#guess').prop('disabled', true);
+	
+	reset_once = 0;
 }
 
 // Show try again message

@@ -41,18 +41,18 @@
 		<form id="game-form" name="game-form">
 			<label for="guess">Which song is this?</label><br/>
 			<div class="autocomplete">
-				<input type="text" id="guess" name="guess" size="30"/>
+				<input type="text" id="guess" name="guess" size="30" title="Enter your answer here"/>
 			</div>
 		</form>
 
 		<p class="buttons">
-			<button type="button" id="submit" value="submit" onClick="submitGuess()">Submit</button>
-			<button type="button" id="giveup" value="giveup" onClick="endGame()">Give Up</button>
-			<button type="button" id="reset" value="reset" onClick="resetGame()">Reset</button>
+			<button type="button" id="submit" value="submit" onClick="submitGuess()" title="Submit your answer">Submit</button>
+			<button type="button" id="giveup" value="giveup" onClick="endGame()" title="Give up this round">Give Up</button>
+			<button type="button" id="reset" value="reset" onClick="resetGame()" title="Try another song">Reset</button>
 			<div id="message"></div>
 		</p>
 
-		<p id="result" class="result"><!-- last result: bottom center </p>
+		<p id="result" class="result"><!-- last result: bottom center --></p>
 		
 		<p id="tries"><!-- recent guesses: lower right corner --></p>
 		
