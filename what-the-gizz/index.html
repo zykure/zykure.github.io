@@ -18,7 +18,7 @@
 			$(document).ready(function() {
 				autocomplete(document.getElementById("guess"), song_names);
 				updateInfo();
-				resetGame();
+				resetGame(false);
 			});
 		</script>
 	</head>
@@ -52,13 +52,15 @@
 			<div id="message"></div>
 		</p>
 
-		<p id="result" class="result"></p>
+		<p id="result" class="result"><!-- last result: bottom center </p>
 		
-		<p id="tries"></p>
+		<p id="tries"><!-- recent guesses: lower right corner --></p>
 		
-		<p id="highscore"></p>
+		<p id="streak"><!-- current streak: upper left corner --></p>
 
-		<p id="info">
+		<p id="highscore"><!-- current highscore: upper right corner --></p>
+
+		<p id="info"><!-- info text: lower left corner -->
 			A King Gizzard inspired browser game. Updated <span id="modified">sometime</span>.
 			<br/>
 			Source code on <a href="https://github.com/zykure/zykure.github.io/tree/main/what-the-gizz">GitHub</a>.

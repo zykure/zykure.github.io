@@ -27,6 +27,11 @@ if (!highscore)
 	highscore = 0;
 console.log("Last highscore:", highscore);
 
+var streak = parseInt(getCookie('streak'));
+if (!streak)
+	streak = 0;
+console.log("Last streak:", streak);
+
 // Load song data from file
 function loadSongData() {
 	songs = [];
@@ -123,6 +128,7 @@ function resetGame() {
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
+	updateStreak();
 	updateHighscore();
 	
 	// clear input field
@@ -143,19 +149,21 @@ function endGame() {
 }
 
 // Show game over message
-function showGameOver(forfeit = false) {
+function showGameOver(forfeit_game = false) {
 	// pick a symbol
 	var symbol = randomChoice(symbols_gameover);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
 
+	streak = 0;  // game over loses current streak
+
 	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>GAME OVER!</b>
 		<span class="symbol">${symbol}</span>
 	`
-	if (! forfeit) {
+	if (!forfeit_game) {
 		html_text += `
 			<br/>
 			You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
@@ -201,7 +209,6 @@ function showWin() {
 
 	if (!highscore || score.toFixed(0) > highscore.toFixed(0)) {
 		highscore = score;
-		setCookie('highscore', highscore, 90);  // save for 90 days
 
 		html_text += `
 			<br/>
@@ -210,6 +217,14 @@ function showWin() {
 		
 		updateHighscore();
 	}
+
+	if (!streak)
+		streak = 0;
+	
+	streak++;
+	console.log("Win streak: ", streak);
+
+	updateStreak();
 
 	// show message
 	$('#result').html(html_text);
@@ -245,6 +260,10 @@ function showTryAgain() {
 
 // Update highscore
 function updateHighscore() {
+	if (!highscore)
+		highscore = 0;
+	setCookie('highscore', highscore, 90);  // save for 90 days
+
 	var html_text = "";
 	
 	if (highscore > 0) {
@@ -260,6 +279,30 @@ function updateHighscore() {
 	}
 	else {
 		$('#highscore').hide();
+	}
+}
+
+// Update streak
+function updateStreak() {
+	if (!streak)
+		streak = 0;
+	setCookie('streak', streak, 90);  // save for 90 days
+
+	var html_text = "";
+	
+	if (streak > 0) {
+		var streak_text = streak.toFixed(0);
+		html_text = `
+			Your win streak: ${streak_text}<br/>
+		`
+	}
+	
+	if (html_text) {
+		$('#streak').html(html_text);
+		$('#streak').show();
+	}
+	else {
+		$('#streak').hide();
 	}
 }
 
