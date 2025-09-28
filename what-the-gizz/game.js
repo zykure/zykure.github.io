@@ -85,7 +85,18 @@ function chooseNewSong() {
 // Update song lyrics data
 function updateSongLyrics() {
 	// save unique set of lines
-	uniq_lyrics = [...new Set(current_song.lyrics)];
+	var tmp_lyrics = new Set();
+	
+	current_song.lyrics.forEach((line) => {
+		// strip punctuation at end of lines
+		if (".,:;…?!".indexOf(line.slice(-1)) >= 0) {
+			line = line.substr(0, line.length-1);  // strip off last char
+		}
+		tmp_lyrics.add(line);
+	});
+	
+	uniq_lyrics = [...tmp_lyrics];
+	console.log(uniq_lyrics);
 
 	// count available lines
 	num_lyrics = uniq_lyrics.length;
@@ -131,6 +142,33 @@ function updatePrompt() {
 	setCookie('streak', -1*streak, COOKIE_LIFETIME);
 }
 
+function initGame() {
+	if (streak < 0) {
+		resetGame();
+		return;
+	}
+	
+	// update streak/score display
+	updateStreak();
+	updateHighscore();
+	
+	// show info message
+	$('#message').html("The game has not started yet.");
+
+	// clear + disable input field
+	$('#guess').val("");
+	$('#guess').prop('disabled', false);
+	
+	// hide result text
+	$('#result').hide();
+	
+	// hide/show buttons
+	$('#submit').hide();
+	$('#giveup').hide();
+	$('#reset').hide();	
+	$('#start').show();
+}
+
 // Start new game
 function resetGame() {
 	if (streak < 0) {
@@ -148,6 +186,9 @@ function resetGame() {
 	updatePrompt();
 	updateGuesses();
 	
+	// clear info message
+	$('#message').html("");
+
 	// clear + enable input field
 	$('#guess').val("");
 	$('#guess').prop('disabled', false);
@@ -162,6 +203,7 @@ function resetGame() {
 	$('#submit').show();
 	$('#giveup').show();
 	$('#reset').hide();
+	$('#start').hide();
 }
 
 // Forfeit the game

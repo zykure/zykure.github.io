@@ -196,7 +196,7 @@ button {
 	font-size: 90%;
 	padding: 6px 12px;
 	margin: 10px 20px;
-	width: 120px;
+	width: 150px;
 	opacity: 0.9;
 	transition: transform .2s;
 }
@@ -216,14 +216,14 @@ button:not(:disabled):focus {
 	border-radius: 6px;
 }
 
-#giveup {
-	background-color: #ffd23f;
-	border: 2px solid #ffd23f;
+#giveup {	
+	background-color: #ee4266;
+	border: 2px solid #ee4266;
 	border-radius: 6px;
 }
 
-#reset {
-	background-color: #ee4266;
-	border: 2px solid #ee4266;
+#reset, #start {
+	background-color: #ffd23f;
+	border: 2px solid #ffd23f;
 	border-radius: 6px;
 }

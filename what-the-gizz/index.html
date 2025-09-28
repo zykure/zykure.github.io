@@ -18,7 +18,7 @@
 			$(document).ready(function() {
 				autocomplete(document.getElementById("guess"), song_names);
 				updateInfo();
-				resetGame(false);
+				initGame();
 			});
 		</script>
 	</head>
@@ -29,13 +29,13 @@
 			<span>t</span><span>h</span><span>e</span>&nbsp;
 			<span>G</span><span>i</span><span>z</span><span>z</span><span>?</span><span>!</span>
 		</h1>
-
+		
 		<h2>
 			Guess this Gizz song by the following lyrics line:
 		</h2>
 
-		<h3 id="lyrics-line">
-			???
+		<h3 id="lyrics-line"><!-- filled in with one line from current song lyrics -->
+			...
 		</h3>
 
 		<form id="game-form" name="game-form">
@@ -49,6 +49,7 @@
 			<button type="button" id="submit" value="submit" onClick="submitGuess()" title="Submit your answer">Submit</button>
 			<button type="button" id="giveup" value="giveup" onClick="endGame()" title="Give up this round">Give Up</button>
 			<button type="button" id="reset" value="reset" onClick="resetGame()" title="Try another song">Reset</button>
+			<button type="button" id="start" value="start" onClick="resetGame()" title="Start the game">Start Game</button>
 			<div id="message"></div>
 		</p>
 
