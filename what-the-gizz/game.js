@@ -1,39 +1,39 @@
 //console.log(all_lyrics);
 
+// Keep cookies for up to 90 days
+const COOKIE_LIFETIME = 90;  
+
 // Some emojis for result display
-const symbols_correct   = ['🥳', '🤩', '😎', '😄', '😆'];
-const symbols_incorrect = ['🫢', '🫣', '🤔', '🤨', '😧', '😱'];
-const symbols_gameover  = ['😵', '😵‍💫', '😖', '😭', '🤬'];
+const SYMBOLS_CORRECT   = ['🥳', '🤩', '😎', '😄', '😆'];
+const SYMBOLS_INCORRECT = ['🫢', '🫣', '🤔', '🤨', '😧', '😱'];
+const SYMBOLS_GAMEOVER  = ['😵', '😵‍💫', '😖', '😭', '🤬'];
 
 // Load songs from JSON
 var songs = [];
 var song_names = [];
 loadSongData();
 
-// The song to guess in this round
-var current_song = null;
-var current_song_name = null;
-
 // Lyrics lines in this round (after input filter)
 var uniq_lyrics = [];
 var num_lyrics = 0;
+
+// The song to guess in this round
+var current_song = null;
+var current_song_name = null;
 
 // List of previously guessed songs in this round
 var previous_guesses = [];
 var num_guesses = 0;
 
-// Keep track of reset button presses (2nd time resets win streak)
-var reset_once = 0;
-
 // Restore highscore from cookie
 var highscore = parseInt(getCookie('highscore'));
-if (!highscore)
+if (! highscore)
 	highscore = 0;
 console.log("Last highscore:", highscore);
 
 // Restore win streak from cookie
 var streak = parseInt(getCookie('streak'));
-if (!streak)
+if (! streak)
 	streak = 0;
 console.log("Last streak:", streak);
 
@@ -76,7 +76,7 @@ function chooseNewSong() {
 
 		console.log("Not enough lines, choosing again.");
 	}
-
+	
 	// reset game data
 	num_guesses = 0;
 	previous_guesses = [];
@@ -125,37 +125,43 @@ function updatePrompt() {
 	$('#lyrics-line').html("»&nbsp;" + lyrics_line + "&nbsp;«");
 	$('#lyrics-line').focus();
 
-	//$('#guess').val("");
+	// Prevent users from reloading the page in order to increase their win streak.
+	// While guessing, the win streak is removed. It is only saved at the end of the round with the current value.
+	// We store the negative streak value so that we can later show a message if the streak was lost (does not trigger when streak was zero.)
+	setCookie('streak', -1*streak, COOKIE_LIFETIME);
 }
 
 // Start new game
 function resetGame() {
-	// pressing reset twice in a row reset the win streak
-	if (streak > 0 && reset_once == 0) {
-		$('#message').html('Pressing RESET (again) will lose the win streak.')
-	}
-	if (reset_once >= 1) {
+	if (streak < 0) {
+		// show message when a previous streak was lost (due to reloading the page)
+		$('#message').html(`You lost your win streak of ${-1*streak} rounds.`)
 		streak = 0;
-		reset_once = 0;
 	}
-	reset_once++;
 	
+	// update streak/score display
+	updateStreak();
+	updateHighscore();
+
+	// update prompt with new song
 	chooseNewSong();
 	updatePrompt();
 	updateGuesses();
-	updateStreak();
-	updateHighscore();
 	
-	// clear input field
+	// clear + enable input field
 	$('#guess').val("");
+	$('#guess').prop('disabled', false);
 
+	// focus hint so that TAB moves to input field
 	$('#lyrics-line').focus();
 
+	// hide result text
 	$('#result').hide();
-	$('#guess').prop('disabled', false);
-	$('#submit').prop('disabled', false);
-	$('#giveup').prop('disabled', false);
-	$('#reset').prop('disabled', false);
+
+	// hide/show buttons
+	$('#submit').show();
+	$('#giveup').show();
+	$('#reset').hide();
 }
 
 // Forfeit the game
@@ -166,21 +172,17 @@ function endGame() {
 // Show game over message
 function showGameOver(forfeit_game = false) {
 	// pick a symbol
-	var symbol = randomChoice(symbols_gameover);
+	var symbol = randomChoice(SYMBOLS_GAMEOVER);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
-
-	streak = 0;  // game over loses current streak
-	console.log("Win streak lost!");
-	updateStreak();
-
+	
 	html_text = `
 		<span class="symbol">${symbol}</span>
 		<b>GAME OVER!</b>
 		<span class="symbol">${symbol}</span>
 	`
-	if (!forfeit_game) {
+	if (! forfeit_game) {
 		html_text += `
 			<br/>
 			You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
@@ -190,22 +192,38 @@ function showGameOver(forfeit_game = false) {
 		<br/><br/>
 		The correct answer was: <b><span id="correct-answer">${current_song.name}</span></b>
 	`
+	
+	if (streak > 0) {
+		html_text += `
+			<br/>
+			You lost your win streak of ${streak} rounds.
+		`
+	}
 
-	// show message
+	streak = 0;  // game over loses current streak
+	console.log("Win streak lost!");
+	updateStreak();
+
+	// show game over message
 	$('#result').html(html_text);
 	$('#result').show();
-
-	$('#submit').prop('disabled', true);
-	$('#giveup').prop('disabled', true);
-	$('#guess').prop('disabled', true);
 	
-	reset_once = 0;
+	// clear info message
+	$('#message').html("");
+
+	// disable input
+	$('#guess').prop('disabled', true);
+
+	// hide/show buttons
+	$('#submit').hide();
+	$('#giveup').hide();
+	$('#reset').show();
 }
 
 // Show win message
 function showWin() {
 	// pick a symbol
-	var symbol = randomChoice(symbols_correct);
+	var symbol = randomChoice(SYMBOLS_CORRECT);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
@@ -239,12 +257,12 @@ function showWin() {
 	if (streak_text) {
 		html_text += `
 			<br/>
-			Win streak: ${streak_text}
+			Your win streak: ${streak_text}
 		`
 	}
 
 	// show new highscore message
-	if (!highscore || score.toFixed(0) > highscore.toFixed(0)) {
+	if (! highscore || score.toFixed(0) > highscore.toFixed(0)) {
 		highscore = score;
 		updateHighscore();
 		
@@ -253,25 +271,27 @@ function showWin() {
 			<b>🎉 NEW HIGHSCORE! 🎉</b>
 		`
 	}
-
-	if (!streak)
-		streak = 0;
 	
-	// show message
+	// show win message
 	$('#result').html(html_text);
 	$('#result').show();
 
-	$('#submit').prop('disabled', true);
-	$('#giveup').prop('disabled', true);
+	// clear info message
+	$('#message').html("");
+
+	// disable input
 	$('#guess').prop('disabled', true);
-	
-	reset_once = 0;
+
+	// hide/show buttons
+	$('#submit').hide();
+	$('#giveup').hide();
+	$('#reset').show();
 }
 
 // Show try again message
 function showTryAgain() {
 	// pick a symbol
-	var symbol = randomChoice(symbols_incorrect);
+	var symbol = randomChoice(SYMBOLS_INCORRECT);
 	var guessed_text = num_guesses + " guesses";
 	if (num_guesses == 1)
 		guessed_text = num_guesses + " guess";
@@ -293,9 +313,9 @@ function showTryAgain() {
 
 // Update highscore
 function updateHighscore() {
-	if (!highscore)
+	if (! highscore || highscore < 0)
 		highscore = 0;
-	setCookie('highscore', highscore, 90);  // save for 90 days
+	setCookie('highscore', highscore, COOKIE_LIFETIME);
 
 	var html_text = "";
 	
@@ -317,9 +337,9 @@ function updateHighscore() {
 
 // Update streak
 function updateStreak() {
-	if (!streak)
+	if (! streak || streak < 0)
 		streak = 0;
-	setCookie('streak', streak, 90);  // save for 90 days
+	setCookie('streak', streak, COOKIE_LIFETIME);
 
 	var html_text = "";
 	
@@ -364,15 +384,20 @@ function submitGuess() {
 	// get user input
 	var guessed_name = $('#guess').val().trim();
 	console.log("Submitted guess: ", guessed_name);
-
-	// ignore empty or repeated answers
-	if (guessed_name != "" && previous_guesses.includes(guessed_name)) {
+	
+	if (guessed_name == "") {
+		// warn on empty answer
+		$('#message').html('Empty answer - try entering a song title!')
+	}
+	else if (previous_guesses.includes(guessed_name)) {
+		// ignore repeated answers
 		console.log("You already tried this song - choose again!");
-		$('#message').html('Repeated answer - try again!')
+		$('#message').html('Repeated answer - please try again!')
 		return;
 	}
-
-	$('#message').html("");
+	else {
+		$('#message').html("");
+	}
 
 	// update game data
 	if (guessed_name != "") {

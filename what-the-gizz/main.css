@@ -193,10 +193,10 @@ a:hover {
 }
 
 button {
-	font-size: 80%;
+	font-size: 90%;
 	padding: 6px 12px;
 	margin: 10px 20px;
-	width: 100px;
+	width: 120px;
 	opacity: 0.9;
 	transition: transform .2s;
 }
