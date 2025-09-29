@@ -215,9 +215,6 @@ function endGame() {
 function showGameOver(forfeit_game = false) {
 	// pick a symbol
 	var symbol = randomChoice(SYMBOLS_GAMEOVER);
-	var guessed_text = num_guesses + " guesses";
-	if (num_guesses == 1)
-		guessed_text = num_guesses + " guess";
 	
 	html_text = `
 		<span class="symbol">${symbol}</span>
@@ -225,6 +222,7 @@ function showGameOver(forfeit_game = false) {
 		<span class="symbol">${symbol}</span>
 	`
 	if (! forfeit_game) {
+		var guessed_text = num_guesses + " " + (num_guesses == 1 ? "guess" : "guesses");
 		html_text += `
 			<br/>
 			You've used <span id="guessed-count">${guessed_text}</span> and there are no more lyrics left.
@@ -236,9 +234,10 @@ function showGameOver(forfeit_game = false) {
 	`
 	
 	if (streak > 0) {
+		var streak_text = streak + " " + (streak == 1 ? "round" : "rounds");
 		html_text += `
 			<br/>
-			You lost your win streak of ${streak} rounds.
+			You lost your win streak of ${streak_text}.
 		`
 	}
 
